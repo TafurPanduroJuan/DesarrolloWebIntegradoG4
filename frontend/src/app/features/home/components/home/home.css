@@ -1,0 +1,22 @@
+
+body{
+  background-color: rgb(240, 254, 240);
+}
+.text-muted{
+  color: green !important;
+}
+
+.carousel-inner{
+  background-color: rgb(230, 240, 230) !important;
+  box-shadow:2px 1px 3px 3px rgb(215, 236, 215) !important;
+}
+
+.card {
+  height: 100% !important;             
+  min-height: 400px !important;        
+}
+
+.card-img-top {
+  height: 200px !important;             
+  object-fit: cover !important;         
+}

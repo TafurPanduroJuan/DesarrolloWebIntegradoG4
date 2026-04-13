@@ -1,0 +1,90 @@
+<div id="heroCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000">
+  <div class="carousel-inner">
+    <div class="carousel-item" *ngFor="let d of datos; let i = index" [class.active]="i === 0">
+      <img [src]="d.imagen" class="d-block w-100" alt="slide" style="height: 80vh; object-fit: cover" />
+      <div class="carousel-caption d-flex flex-column justify-content-center h-100">
+        <h1 class="display-3 fw-bold">{{ d.frase }}</h1>
+        <p class="lead">{{ d.descripcion }}</p>
+        <div *ngIf="d.boton">
+          <button class="btn btn-lg me-2" [ngClass]="d.boton.estilo" [routerLink]="d.boton.ruta">
+            {{ d.boton.texto }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controles -->
+  <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+    <i class="bi bi-arrow-left-circle-fill text-dark fs-1"></i>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+    <i class="bi bi-arrow-right-circle-fill text-dark fs-1"></i>
+  </button>
+</div>
+<section class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Productos de Calidad</h2>
+    <button class="btn btn-outline-success rounded-pill">Ir al Catálogo —></button>
+  </div>
+
+  <div class="row g-4">
+  <div class="col-12 col-md-6 col-lg-4" *ngFor="let p of productos">
+    <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden">
+      <img class="card-img-top" [src]="p.imagen" [alt]="p.nombre" />
+      <div class="card-body">
+        <span class="badge bg-light text-success mb-2">{{ p.categoria }}</span>
+        <h5 class="card-title fw-bold">{{ p.nombre }}</h5>
+        <p class="card-text text-muted small">{{ p.descripcion }}</p>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <span class="fw-bold text-success fs-5">Precio: {{ p.precio }}</span>
+          <div class="btn-group">
+            <button class="btn btn-sm btn-link text-decoration-none text-dark">Ver</button>
+            <button class="btn btn-sm btn-success px-3">Comprar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section class="py-5" style="background-color: #f9f7f2">
+  <div class="container text-center">
+    <h2 class="fw-bold mb-4">!Comunidad de AgroLink!</h2>
+
+    <div id="communityCarousel" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-inner p-5 bg-white shadow-sm rounded-4 mx-auto" style="max-width: 800px">
+        <div
+          class="carousel-item"
+          *ngFor="let t of testimonios; let i = index"
+          [class.active]="i === 0"
+        >
+          <div class="text-warning mb-3">{{ '★'.repeat(t.estrellas) }}</div>
+          <p class="fs-5 italic">"{{ t.texto }}"</p>
+          <h6 class="fw-bold mt-3">{{ t.autor }}</h6>
+          <small class="text-muted">{{ t.rol }}</small>
+        </div>
+      </div>
+
+      <!-- Controles -->
+      <button
+        class="carousel-control-prev"
+        type="button"
+        data-bs-target="#communityCarousel"
+        data-bs-slide="prev"
+      >
+        <i class="bi bi-arrow-left-circle-fill text-dark fs-1"></i>
+      </button>
+      <button
+        class="carousel-control-next"
+        type="button"
+        data-bs-target="#communityCarousel"
+        data-bs-slide="next"
+      >
+        <i class="bi bi-arrow-right-circle-fill text-dark fs-1"></i>
+      </button>
+    </div>
+  </div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
