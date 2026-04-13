@@ -1,1 +1,249 @@
-<p>AQUI VAN LOS PRODUCTOS!!</p>
+<!-- HERO SECTION -->
+<section class="catalog-hero">
+  <div class="container py-5">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <span class="badge-hero mb-3">Productos del Campo</span>
+        <h1 class="hero-title">Catálogo <span class="text-success">AgroLink</span></h1>
+        <p class="hero-subtitle">
+          Frutas, verduras y granos frescos directamente de agricultores peruanos.
+          Calidad garantizada, trazabilidad completa.
+        </p>
+      </div>
+      <div class="col-lg-5 text-end d-none d-lg-block">
+        <div class="hero-stats d-flex gap-4 justify-content-end">
+          <div class="stat-box">
+            <span class="stat-num">{{ productos.length }}</span>
+            <span class="stat-label">Productos</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num">{{ categorias.length - 1 }}</span>
+            <span class="stat-label">Categorías</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num">100%</span>
+            <span class="stat-label">Peruano</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FILTROS -->
+<section class="container py-4">
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <span class="filter-label">Filtrar por:</span>
+    <button
+      *ngFor="let cat of categorias"
+      class="btn-filtro"
+      [class.activo]="categoriaActiva === cat"
+      (click)="setCategoria(cat)"
+    >
+      {{ cat }}
+    </button>
+  </div>
+  <p class="resultado-count mt-3 mb-0">
+    Mostrando <strong>{{ productosFiltrados.length }}</strong> producto(s)
+    <span *ngIf="categoriaActiva !== 'Todos'"> en <strong>{{ categoriaActiva }}</strong></span>
+  </p>
+</section>
+
+<!-- GRID DE PRODUCTOS -->
+<section class="container pb-5">
+  <div class="row g-4">
+    <div class="col-12 col-md-6 col-lg-4" *ngFor="let p of productosFiltrados">
+      <div class="product-card h-100">
+
+        <!-- Imagen -->
+        <div class="product-img-wrapper">
+          <img [src]="p.imagen" [alt]="p.nombre" class="product-img" />
+          <span class="badge-categoria">{{ p.categoria }}</span>
+          <span class="badge-disponible" [class.agotado]="!p.disponible">
+            {{ p.disponible ? 'Disponible' : 'Agotado' }}
+          </span>
+        </div>
+
+        <!-- Body -->
+        <div class="product-body">
+          <h5 class="product-nombre">{{ p.nombre }}</h5>
+          <p class="product-desc">{{ p.descripcion }}</p>
+
+          <div class="product-agricultor">
+            <i class="bi bi-person-fill me-1"></i>
+            <span>{{ p.vendedor.nombre }}</span>
+            <span class="ms-auto badge-tipo" [class.empresa]="p.vendedor.tipo === 'Empresa'">
+              {{ p.vendedor.tipo }}
+            </span>
+          </div>
+
+          <div class="product-footer">
+            <div>
+              <span class="product-precio">{{ p.precio }}</span>
+              <span class="product-unidad"> {{ p.unidad }}</span>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn-ver" (click)="abrirModal(p)">Ver detalle</button>
+              <button
+                class="btn-pedir"
+                [disabled]="!p.disponible"
+                [class.disabled]="!p.disponible"
+              >
+                Pedir
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Sin resultados -->
+  <div *ngIf="productosFiltrados.length === 0" class="empty-state text-center py-5">
+    <i class="bi bi-search fs-1 text-muted"></i>
+    <p class="mt-3 text-muted">No hay productos en esta categoría por ahora.</p>
+    <button class="btn btn-outline-success rounded-pill px-4" (click)="setCategoria('Todos')">
+      Ver todos los productos
+    </button>
+  </div>
+</section>
+
+<!-- BANNER AGRICULTOR -->
+<section class="banner-agricultor py-5">
+  <div class="container text-center">
+    <h2 class="fw-bold mb-2">¿Eres agricultor?</h2>
+    <p class="mb-4">Registra tus cultivos y llega a compradores en todo el Perú.</p>
+    <a routerLink="/form" class="btn btn-light rounded-pill px-5 fw-bold text-success">
+      Únete a AgroLink
+    </a>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     MODAL DETALLE DE PRODUCTO
+═══════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="productoSeleccionado" (click)="cerrarModal()">
+  <div class="modal-panel" (click)="$event.stopPropagation()">
+
+    <!-- Botón cerrar -->
+    <button class="modal-close" (click)="cerrarModal()">
+      <i class="bi bi-x-lg"></i>
+    </button>
+
+    <!-- Imagen del producto -->
+    <div class="modal-img-wrapper">
+      <img [src]="productoSeleccionado.imagen" [alt]="productoSeleccionado.nombre" class="modal-img" />
+      <span class="modal-badge-cat">{{ productoSeleccionado.categoria }}</span>
+      <span class="modal-badge-disp" [class.agotado]="!productoSeleccionado.disponible">
+        {{ productoSeleccionado.disponible ? 'Disponible' : 'Agotado' }}
+      </span>
+    </div>
+
+    <!-- Contenido scrolleable -->
+    <div class="modal-body-scroll">
+
+      <!-- Nombre y precio -->
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <h3 class="modal-product-nombre">{{ productoSeleccionado.nombre }}</h3>
+          <span class="modal-product-precio">{{ productoSeleccionado.precio }}</span>
+          <span class="modal-product-unidad"> {{ productoSeleccionado.unidad }}</span>
+        </div>
+      </div>
+
+      <!-- Descripción completa -->
+      <p class="modal-detalle-texto">{{ productoSeleccionado.detalleCompleto }}</p>
+
+      <!-- Info del producto -->
+      <div class="modal-info-grid">
+        <div class="modal-info-item">
+          <i class="bi bi-box-seam"></i>
+          <div>
+            <span class="info-label">Stock</span>
+            <span class="info-valor" [class.text-danger]="!productoSeleccionado.disponible">
+              {{ productoSeleccionado.stock }}
+            </span>
+          </div>
+        </div>
+        <div class="modal-info-item">
+          <i class="bi bi-calendar3"></i>
+          <div>
+            <span class="info-label">Fecha de cosecha</span>
+            <span class="info-valor">{{ productoSeleccionado.fechaCosecha }}</span>
+          </div>
+        </div>
+        <div class="modal-info-item full-width">
+          <i class="bi bi-truck"></i>
+          <div>
+            <span class="info-label">Condiciones de entrega</span>
+            <span class="info-valor">{{ productoSeleccionado.condicionesEntrega }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECCIÓN VENDEDOR ── -->
+      <div class="vendedor-card">
+        <div class="vendedor-header">
+          <div class="vendedor-avatar">
+            <i class="bi" [ngClass]="productoSeleccionado.vendedor.tipo === 'Empresa' ? 'bi-building' : 'bi-person-fill'"></i>
+          </div>
+          <div>
+            <h5 class="vendedor-nombre">{{ productoSeleccionado.vendedor.nombre }}</h5>
+            <div class="d-flex align-items-center gap-2">
+              <span class="vendedor-tipo-badge" [class.empresa]="productoSeleccionado.vendedor.tipo === 'Empresa'">
+                <i class="bi me-1" [ngClass]="productoSeleccionado.vendedor.tipo === 'Empresa' ? 'bi-building' : 'bi-person'"></i>
+                {{ productoSeleccionado.vendedor.tipo }}
+              </span>
+              <span class="vendedor-miembro">
+                <i class="bi bi-shield-check me-1"></i>Miembro desde {{ productoSeleccionado.vendedor.miembroDesde }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <p class="vendedor-desc">{{ productoSeleccionado.vendedor.descripcion }}</p>
+
+        <div class="vendedor-datos">
+          <!-- RUC o DNI -->
+          <div class="vendedor-dato" *ngIf="productoSeleccionado.vendedor.tipo === 'Empresa'">
+            <i class="bi bi-file-earmark-text"></i>
+            <span class="dato-label">RUC</span>
+            <span class="dato-valor">{{ productoSeleccionado.vendedor.ruc }}</span>
+          </div>
+          <div class="vendedor-dato" *ngIf="productoSeleccionado.vendedor.tipo === 'Persona Natural'">
+            <i class="bi bi-credit-card"></i>
+            <span class="dato-label">DNI</span>
+            <span class="dato-valor">{{ productoSeleccionado.vendedor.dni }}</span>
+          </div>
+          <!-- Región -->
+          <div class="vendedor-dato">
+            <i class="bi bi-geo-alt"></i>
+            <span class="dato-label">Región</span>
+            <span class="dato-valor">{{ productoSeleccionado.vendedor.region }}</span>
+          </div>
+          <!-- Teléfono -->
+          <div class="vendedor-dato">
+            <i class="bi bi-telephone"></i>
+            <span class="dato-label">Contacto</span>
+            <span class="dato-valor">{{ productoSeleccionado.vendedor.telefono }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="modal-actions">
+        <button class="btn-modal-cancelar" (click)="cerrarModal()">Cerrar</button>
+        <button
+          class="btn-modal-pedir"
+          [disabled]="!productoSeleccionado.disponible"
+          [class.disabled]="!productoSeleccionado.disponible"
+        >
+          <i class="bi bi-cart-plus me-2"></i>
+          {{ productoSeleccionado.disponible ? 'Hacer pedido' : 'No disponible' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

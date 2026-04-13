@@ -1,0 +1,625 @@
+/* ─── HERO ─────────────────────────────────── */
+.catalog-hero {
+  background: linear-gradient(135deg, #f0faf0 0%, #e8f5e0 100%);
+  border-bottom: 1px solid #d4edcc;
+}
+
+.badge-hero {
+  display: inline-block;
+  background-color: #d4edcc;
+  color: #2d5a27;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.hero-title {
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  color: #555;
+  font-size: 1.05rem;
+  max-width: 520px;
+  margin-top: 0.75rem;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  border: 1px solid #d4edcc;
+  border-radius: 12px;
+  padding: 16px 20px;
+  min-width: 80px;
+}
+
+.stat-num {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #2d5a27;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #777;
+  margin-top: 2px;
+}
+
+/* ─── FILTROS ─────────────────────────────── */
+.filter-label {
+  font-size: 0.85rem;
+  color: #777;
+  font-weight: 500;
+}
+
+.btn-filtro {
+  border: 1.5px solid #c8e6c0;
+  background: white;
+  color: #2d5a27;
+  border-radius: 25px;
+  padding: 6px 18px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-filtro:hover {
+  background: #e8f5e0;
+  border-color: #2d5a27;
+}
+
+.btn-filtro.activo {
+  background: #2d5a27;
+  color: white;
+  border-color: #2d5a27;
+}
+
+.resultado-count {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* ─── CARDS ───────────────────────────────── */
+.product-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e8f0e4;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(45, 90, 39, 0.12);
+}
+
+.product-img-wrapper {
+  position: relative;
+  overflow: hidden;
+  height: 200px;
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-img {
+  transform: scale(1.04);
+}
+
+.badge-categoria {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255,255,255,0.92);
+  color: #2d5a27;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #c8e6c0;
+}
+
+.badge-disponible {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #2d5a27;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.badge-disponible.agotado {
+  background: #b0b0b0;
+}
+
+.product-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.product-nombre {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+.product-desc {
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.5;
+  flex: 1;
+  margin-bottom: 12px;
+}
+
+.product-agricultor {
+  font-size: 0.8rem;
+  color: #2d5a27;
+  background: #f0faf0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Badge tipo en la card */
+.badge-tipo {
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: #e8f5e0;
+  color: #2d5a27;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid #c8e6c0;
+  white-space: nowrap;
+}
+
+.badge-tipo.empresa {
+  background: #e8f0fb;
+  color: #1a4a8a;
+  border-color: #b8d0f0;
+}
+
+.product-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 12px;
+}
+
+.product-precio {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #2d5a27;
+}
+
+.product-unidad {
+  font-size: 0.78rem;
+  color: #999;
+}
+
+.btn-ver {
+  background: transparent;
+  border: 1.5px solid #c8e6c0;
+  color: #2d5a27;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-ver:hover {
+  background: #e8f5e0;
+}
+
+.btn-pedir {
+  background: #2d5a27;
+  border: none;
+  color: white;
+  border-radius: 20px;
+  padding: 5px 16px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-pedir:hover:not(.disabled) {
+  background: #1e3d1a;
+}
+
+.btn-pedir.disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* ─── EMPTY STATE ─────────────────────────── */
+.empty-state { width: 100%; }
+
+/* ─── BANNER FINAL ────────────────────────── */
+.banner-agricultor {
+  background: linear-gradient(135deg, #2d5a27 0%, #3a7a32 100%);
+  color: white;
+}
+
+.banner-agricultor h2,
+.banner-agricultor p {
+  color: white !important;
+}
+
+/* ═══════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeOverlay 0.2s ease;
+}
+
+@keyframes fadeOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-panel {
+  background: white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.25s ease;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Botón cerrar */
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  background: rgba(255,255,255,0.9);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: #f0f0f0;
+}
+
+/* Imagen del modal */
+.modal-img-wrapper {
+  position: relative;
+  height: 220px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.modal-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-badge-cat {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  background: rgba(255,255,255,0.92);
+  color: #2d5a27;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #c8e6c0;
+}
+
+.modal-badge-disp {
+  position: absolute;
+  bottom: 12px;
+  right: 14px;
+  background: #2d5a27;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.modal-badge-disp.agotado {
+  background: #b0b0b0;
+}
+
+/* Cuerpo scrolleable */
+.modal-body-scroll {
+  overflow-y: auto;
+  padding: 24px;
+  flex: 1;
+}
+
+.modal-product-nombre {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.modal-product-precio {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #2d5a27;
+}
+
+.modal-product-unidad {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.modal-detalle-texto {
+  font-size: 0.92rem;
+  color: #555;
+  line-height: 1.7;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Grid de info del producto */
+.modal-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.modal-info-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: #f8fdf8;
+  border: 1px solid #e8f0e4;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.modal-info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.modal-info-item i {
+  color: #2d5a27;
+  font-size: 1rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.modal-info-item div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info-label {
+  font-size: 0.72rem;
+  color: #999;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+.info-valor {
+  font-size: 0.85rem;
+  color: #333;
+  font-weight: 500;
+}
+
+/* ─── TARJETA VENDEDOR ───────────────────── */
+.vendedor-card {
+  background: #f8fdf8;
+  border: 1px solid #d4edcc;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.vendedor-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.vendedor-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #2d5a27;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.vendedor-nombre {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+/* Badge tipo vendedor */
+.vendedor-tipo-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #e8f5e0;
+  color: #2d5a27;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid #c8e6c0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.vendedor-tipo-badge.empresa {
+  background: #e8f0fb;
+  color: #1a4a8a;
+  border-color: #b8d0f0;
+}
+
+.vendedor-miembro {
+  font-size: 0.72rem;
+  color: #888;
+  display: inline-flex;
+  align-items: center;
+}
+
+.vendedor-desc {
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e8f0e4;
+}
+
+.vendedor-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vendedor-dato {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.vendedor-dato i {
+  color: #2d5a27;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.dato-label {
+  color: #999;
+  font-weight: 600;
+  min-width: 60px;
+  font-size: 0.8rem;
+}
+
+.dato-valor {
+  color: #333;
+  font-weight: 500;
+}
+
+/* ─── BOTONES DE ACCIÓN DEL MODAL ─────────── */
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-modal-cancelar {
+  flex: 1;
+  background: transparent;
+  border: 1.5px solid #ddd;
+  color: #555;
+  border-radius: 25px;
+  padding: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-modal-cancelar:hover {
+  background: #f5f5f5;
+}
+
+.btn-modal-pedir {
+  flex: 2;
+  background: #2d5a27;
+  border: none;
+  color: white;
+  border-radius: 25px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-modal-pedir:hover:not(.disabled) {
+  background: #1e3d1a;
+}
+
+.btn-modal-pedir.disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Scrollbar del modal */
+.modal-body-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.modal-body-scroll::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.modal-body-scroll::-webkit-scrollbar-thumb {
+  background: #c8e6c0;
+  border-radius: 4px;
+}
