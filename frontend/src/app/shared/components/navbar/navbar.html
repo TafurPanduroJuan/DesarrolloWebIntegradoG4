@@ -1,6 +1,6 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top shadow-sm">
+<!-- <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top shadow-sm"> -->
   <div class="container">
-    <a class="navbar-brand d-flex align-items-center" [routerLink]="usuarioActual ? '/dashboard' : '/'">
+    <a class="navbar-brand d-flex align-items-center" routerLink="/">
       <i class="bi bi-leaf-fill text-success me-2"></i>
       <span class="fw-bold" style="color: #2d5a27;">AgroLink</span>
     </a>
@@ -9,7 +9,7 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto align-items-center">
-        <li class="nav-item"><a class="nav-link" [routerLink]="usuarioActual ? '/dashboard' : '/'">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/">Inicio</a></li>
         <li class="nav-item"><a class="nav-link" href="/about">Nosotros</a></li>
         <li class="nav-item"><a class="nav-link" href="/catalog">Catálogo</a></li>
         <li class="nav-item"><a class="nav-link" href="/form">Trabaja con nosotros</a></li>
