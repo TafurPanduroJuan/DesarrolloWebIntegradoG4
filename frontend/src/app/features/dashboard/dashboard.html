@@ -1,0 +1,133 @@
+<div class="dashboard-page py-5">
+    <div class="container">
+
+        <!-- Bienvenida -->
+        <div class="row mb-4" *ngIf="usuario">
+            <div class="col-12">
+                <div class="bienvenida-card d-flex align-items-center gap-4 p-4 rounded-4 shadow-sm">
+                    <div class="avatar-circle">
+                        <span class="fw-bold fs-3 text-white">
+                            {{ usuario.nombre.charAt(0).toUpperCase() }}
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-1">¡Bienvenido, {{ usuario.nombre }}!</h3>
+                        <p class="mb-0 text-muted small">
+                            <i class="bi bi-envelope me-1"></i>{{ usuario.email }}
+                        </p>
+                        <span class="badge-agrolink mt-2 d-inline-block">
+                            <i class="bi bi-patch-check-fill me-1"></i>Productor verificado
+                        </span>
+                    </div>
+                    <div class="ms-auto d-none d-md-block">
+                        <i class="bi bi-leaf-fill text-success" style="font-size: 4rem; opacity: 0.15;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjetas de acceso rápido -->
+        <div class="row g-4 mb-4">
+
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100 card-accion" routerLink="/catalog">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-circle bg-success-light mb-3">
+                            <i class="bi bi-grid-3x3-gap-fill text-success fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">Catálogo</h6>
+                        <p class="text-muted small mb-0">Explora productos del campo</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100 card-accion" routerLink="/form">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-circle bg-warning-light mb-3">
+                            <i class="bi bi-briefcase-fill text-warning fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">Trabaja con nosotros</h6>
+                        <p class="text-muted small mb-0">Únete como productor</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100 card-accion" routerLink="/about">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-circle bg-info-light mb-3">
+                            <i class="bi bi-people-fill text-info fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">Nosotros</h6>
+                        <p class="text-muted small mb-0">Conoce AgroLink</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100 card-accion" (click)="cerrarSesion()"
+                    style="cursor:pointer">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-circle bg-danger-light mb-3">
+                            <i class="bi bi-box-arrow-right text-danger fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">Cerrar sesión</h6>
+                        <p class="text-muted small mb-0">Salir de tu cuenta</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Info de cuenta -->
+        <div class="row" *ngIf="usuario">
+            <div class="col-12 col-lg-6">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-3 text-success">
+                            <i class="bi bi-person-badge me-2"></i>Datos de tu cuenta
+                        </h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted small">Nombre</span>
+                                <span class="fw-semibold small">{{ usuario.nombre }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted small">Correo</span>
+                                <span class="fw-semibold small">{{ usuario.email }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted small">ID de cuenta</span>
+                                <span class="fw-semibold small text-muted">{{ usuario.id | slice:0:8 }}...</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted small">Estado</span>
+                                <span class="badge bg-success rounded-pill">Activo</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6 mt-4 mt-lg-0">
+                <div class="card border-0 shadow-sm rounded-4 h-100"
+                    style="background: linear-gradient(135deg, #f0faf0, #e8f5e0);">
+                    <div class="card-body p-4 d-flex flex-column justify-content-center text-center">
+                        <i class="bi bi-patch-check-fill text-success fs-1 mb-3"></i>
+                        <h6 class="fw-bold">¡Eres parte de AgroLink!</h6>
+                        <p class="text-muted small">
+                            Conectamos a los mejores productores del Perú.<br>
+                            Explora el catálogo y descubre productos de calidad.
+                        </p>
+                        <a routerLink="/catalog" class="btn btn-success btn-sm rounded-pill px-4 mt-2"
+                            style="background-color: #2d5a27; border-color: #2d5a27;">
+                            <i class="bi bi-arrow-right me-1"></i>Ir al catálogo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

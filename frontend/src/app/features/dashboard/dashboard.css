@@ -1,0 +1,70 @@
+.dashboard-page {
+    background: linear-gradient(135deg, #f0faf0 0%, #f9f7f2 100%);
+    min-height: 100vh;
+}
+
+.bienvenida-card {
+    background: linear-gradient(135deg, #2d5a27 0%, #3d7a35 100%);
+    color: white;
+}
+
+.bienvenida-card .text-muted {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.avatar-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    flex-shrink: 0;
+}
+
+.badge-agrolink {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.card-accion {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.card-accion:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.icon-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.bg-success-light {
+    background-color: #d4edcc;
+}
+
+.bg-warning-light {
+    background-color: #fff3cd;
+}
+
+.bg-info-light {
+    background-color: #d1ecf1;
+}
+
+.bg-danger-light {
+    background-color: #f8d7da;
+}
