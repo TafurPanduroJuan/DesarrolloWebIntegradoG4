@@ -1,0 +1,35 @@
+.register-page {
+    background: linear-gradient(135deg, #f0faf0 0%, #e8f5e0 100%);
+    min-height: 100vh;
+}
+
+.card-header-agrolink {
+    background-color: #2d5a27;
+}
+
+.btn-agrolink {
+    background-color: #2d5a27;
+    color: #fff;
+    border: none;
+    transition: background-color 0.2s ease;
+}
+
+.btn-agrolink:hover:not(:disabled) {
+    background-color: #1e3d1a;
+    color: #fff;
+}
+
+.btn-agrolink:disabled {
+    background-color: #6a9b64;
+    color: #fff;
+}
+
+.form-control:focus {
+    border-color: #2d5a27;
+    box-shadow: 0 0 0 0.2rem rgba(45, 90, 39, 0.2);
+}
+
+.form-check-input:checked {
+    background-color: #2d5a27;
+    border-color: #2d5a27;
+}
