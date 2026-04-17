@@ -1,1 +1,96 @@
-<p>login works!</p>
+<div class="login-page d-flex align-items-center justify-content-center min-vh-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+
+                <!-- Card -->
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+
+                    <!-- Header verde -->
+                    <div class="card-header-agrolink text-white text-center py-4">
+                        <i class="bi bi-leaf-fill fs-2 me-2"></i>
+                        <span class="fw-bold fs-4">AgroLink</span>
+                        <p class="mb-0 mt-1 opacity-75 small">Ingresa a tu cuenta</p>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="card-body px-4 py-4">
+                        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+                            <!-- Email -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small text-dark" for="email">
+                                    <i class="bi bi-envelope me-1 text-success"></i>Correo electrónico
+                                </label>
+                                <input id="email" type="email" class="form-control rounded-3"
+                                    [class.is-invalid]="emailInvalido" formControlName="email"
+                                    placeholder="ejemplo@correo.com" />
+                                <div class="invalid-feedback" *ngIf="emailInvalido">
+                                    Ingresa un correo válido.
+                                </div>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small text-dark" for="password">
+                                    <i class="bi bi-lock me-1 text-success"></i>Contraseña
+                                </label>
+                                <div class="input-group">
+                                    <input id="password" [type]="mostrarPassword ? 'text' : 'password'"
+                                        class="form-control rounded-start-3" [class.is-invalid]="passwordInvalido"
+                                        formControlName="password" placeholder="Mínimo 6 caracteres" />
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        (click)="mostrarPassword = !mostrarPassword">
+                                        <i class="bi" [class.bi-eye]="!mostrarPassword"
+                                            [class.bi-eye-slash]="mostrarPassword"></i>
+                                    </button>
+                                    <div class="invalid-feedback" *ngIf="passwordInvalido">
+                                        La contraseña debe tener al menos 6 caracteres.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Error general -->
+                            <div class="alert alert-danger py-2 small rounded-3" *ngIf="error">
+                                <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+                            </div>
+
+                            <!-- Botón submit -->
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-agrolink btn-lg rounded-3 fw-semibold"
+                                    [disabled]="cargando">
+                                    <span *ngIf="!cargando">
+                                        <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar sesión
+                                    </span>
+                                    <span *ngIf="cargando">
+                                        <span class="spinner-border spinner-border-sm me-2"></span>Cargando...
+                                    </span>
+                                </button>
+                            </div>
+
+                        </form>
+
+                        <!-- Divider -->
+                        <hr class="my-4 text-muted" />
+
+                        <p class="text-center small mb-0">
+                            ¿No tienes cuenta?
+                            <a routerLink="/register" class="text-success fw-semibold text-decoration-none">
+                                Regístrate aquí <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Link volver al inicio -->
+                <div class="text-center mt-3">
+                    <a routerLink="/" class="text-muted small text-decoration-none">
+                        <i class="bi bi-arrow-left me-1"></i>Volver al inicio
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
