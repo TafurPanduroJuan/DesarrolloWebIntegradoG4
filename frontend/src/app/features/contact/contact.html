@@ -1,1 +1,65 @@
-<p>ACA VA EL FORMULARIO PARA QUE TRABAJE CON NOSOTROS!</p>
+
+<section class="hero-contact">
+  <div class="overlay">
+    <div class="container text-center text-white">
+      <h1 class="fw-bold">Trabaja con AgroLink</h1>
+      <p class="lead">Conecta con el campo y forma parte del cambio</p>
+    </div>
+  </div>
+</section>
+
+<section class="py-5" style="background: #f9f7f2;">
+  <div class="container">
+
+    <div class="text-center mb-5">
+      <h1 class="fw-bold">Únete a <span class="text-success">AgroLink</span><br> y forma parte de nuestra comunidad.</h1>
+    
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+
+        <div class="card custom-card p-4">
+
+          <form (ngSubmit)="enviar()" #formRef="ngForm">
+
+            <input type="text" class="form-control mb-3"
+              placeholder="Nombre completo"
+              name="nombre" [(ngModel)]="form.nombre" required>
+
+            <input type="email" class="form-control mb-3"
+              placeholder="Correo electrónico"
+              name="correo" [(ngModel)]="form.correo" required>
+
+            <input type="text" class="form-control mb-3"
+              placeholder="Teléfono"
+              name="telefono" [(ngModel)]="form.telefono" required>
+
+            <select class="form-select mb-3"
+              name="tipo" [(ngModel)]="form.tipo" required>
+              <option value="">Tipo de usuario</option>
+              <option>Agricultor</option>
+              <option>Colaborador</option>
+            </select>
+
+            <textarea class="form-control mb-3"
+              placeholder="Cuéntanos sobre ti"
+              name="mensaje" [(ngModel)]="form.mensaje"></textarea>
+
+            <button class="btn btn-success w-100 rounded-pill"
+              [disabled]="!formRef.valid">
+              Enviar solicitud
+            </button>
+
+          </form>
+
+          <div *ngIf="enviado" class="alert alert-success mt-3 text-center rounded-3 shadow-sm">
+            Solicitud enviada correctamente
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
