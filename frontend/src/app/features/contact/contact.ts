@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common'; // 👈 FALTA ESTO
+import { CommonModule } from '@angular/common';
+import { Auth } from '../auth/services/auth';
 
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [FormsModule, CommonModule], // 👈 AÑÁDELO AQUÍ
+  imports: [FormsModule, CommonModule],
   templateUrl: './contact.html',
   styleUrls: ['./contact.css']
 })
@@ -21,8 +22,15 @@ export class Contact {
 
   enviado = false;
 
+  constructor(private auth: Auth) {}
+
   enviar() {
-    console.log(this.form);
+    this.auth.enviarSolicitud({
+      nombre: this.form.nombre,
+      correo: this.form.correo,
+      telefono: this.form.telefono,
+      mensaje: `[${this.form.tipo}] ${this.form.mensaje}`
+    });
 
     this.enviado = true;
 
@@ -33,5 +41,7 @@ export class Contact {
       tipo: '',
       mensaje: ''
     };
+
+    setTimeout(() => this.enviado = false, 5000);
   }
 }
