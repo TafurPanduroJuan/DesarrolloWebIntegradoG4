@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 
+export type RolUsuario = 'agricultor' | 'admin';
+
 export interface Usuario {
   id: string;
   nombre: string;
   email: string;
   password: string;
+  rol: RolUsuario;
 }
 
 @Injectable({
@@ -15,7 +18,26 @@ export class Auth {
   private readonly USERS_KEY = 'agrolink_usuarios';
   private readonly SESSION_KEY = 'agrolink_sesion';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) {
+    this.seedAdmin();
+  }
+
+  /** Crea el usuario admin por defecto si no existe */
+  private seedAdmin(): void {
+    const usuarios = this.getUsuarios();
+    const adminExiste = usuarios.find((u) => u.email === 'admin@agrolink.pe');
+    if (!adminExiste) {
+      const admin: Usuario = {
+        id: 'admin-001',
+        nombre: 'Administrador',
+        email: 'admin@agrolink.pe',
+        password: 'admin123',
+        rol: 'admin',
+      };
+      usuarios.push(admin);
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+    }
+  }
 
   private getUsuarios(): Usuario[] {
     return JSON.parse(localStorage.getItem(this.USERS_KEY) || '[]');
@@ -31,6 +53,7 @@ export class Auth {
       nombre,
       email,
       password,
+      rol: 'agricultor',
     };
     usuarios.push(nuevo);
     localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
@@ -53,6 +76,11 @@ export class Auth {
 
   isLoggedIn(): boolean {
     return !!localStorage.getItem(this.SESSION_KEY);
+  }
+
+  isAdmin(): boolean {
+    const u = this.getUsuarioActual();
+    return u?.rol === 'admin';
   }
 
   getUsuarioActual(): Usuario | null {

@@ -1,0 +1,289 @@
+<div class="intranet-layout" *ngIf="usuario">
+
+  <!-- ===== SIDEBAR ADMIN ===== -->
+  <aside class="sidebar sidebar-admin">
+    <div class="sidebar-brand">
+      <span class="brand-icon">⚙️</span>
+      <span class="brand-text">AgroLink</span>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar admin-avatar">{{ usuario.nombre.charAt(0).toUpperCase() }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ usuario.nombre }}</span>
+        <span class="user-rol">🛡️ Administrador</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item" [class.active]="seccionActiva() === 'resumen'" (click)="irA('resumen')">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'agricultores'" (click)="irA('agricultores')">
+        <span class="nav-icon">👨‍🌾</span> Agricultores
+      </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'pedidos'" (click)="irA('pedidos')">
+        <span class="nav-icon">📦</span> Todos los Pedidos
+      </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'reportes'" (click)="irA('reportes')">
+        <span class="nav-icon">📈</span> Reportes
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a routerLink="/" class="nav-item-link">
+        <span class="nav-icon">🏠</span> Ir al sitio
+      </a>
+      <button class="btn-logout" (click)="cerrarSesion()">
+        <span class="nav-icon">🚪</span> Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="intranet-main">
+
+    <header class="intranet-header">
+      <div class="header-title">
+        <h1 *ngIf="seccionActiva() === 'resumen'">📊 Panel de Control</h1>
+        <h1 *ngIf="seccionActiva() === 'agricultores'">👨‍🌾 Gestión de Agricultores</h1>
+        <h1 *ngIf="seccionActiva() === 'pedidos'">📦 Gestión de Pedidos</h1>
+        <h1 *ngIf="seccionActiva() === 'reportes'">📈 Reportes y Estadísticas</h1>
+      </div>
+      <div class="header-badge-admin">🛡️ Vista Administrador</div>
+    </header>
+
+    <!-- ===== SECCIÓN: RESUMEN ADMIN ===== -->
+    <section *ngIf="seccionActiva() === 'resumen'" class="content-section">
+
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon">👨‍🌾</div>
+          <div class="kpi-data">
+            <span class="kpi-value">{{ totalAgricultores }}</span>
+            <span class="kpi-label">Agricultores registrados</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-data">
+            <span class="kpi-value">{{ agricultoresActivos }}</span>
+            <span class="kpi-label">Agricultores activos</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-yellow">
+          <div class="kpi-icon">⏳</div>
+          <div class="kpi-data">
+            <span class="kpi-value">{{ pedidosPendientes }}</span>
+            <span class="kpi-label">Pedidos pendientes</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-data">
+            <span class="kpi-value">{{ ingresosTotales }}</span>
+            <span class="kpi-label">Ingresos totales</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alertas admin -->
+      <div class="alert-box alert-yellow">
+        <span class="alert-icon">⚠️</span>
+        <span><strong>{{ pedidosPendientes }}</strong> pedido(s) requieren aprobación o seguimiento inmediato.</span>
+      </div>
+      <div class="alert-box alert-blue">
+        <span class="alert-icon">👤</span>
+        <span><strong>1</strong> agricultor nuevo está en estado <strong>Pendiente</strong> de verificación.</span>
+      </div>
+
+      <!-- Agricultores recientes -->
+      <h2 class="section-subtitle">Agricultores recientes</h2>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Región</th>
+              <th>Productos</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of agricultores.slice(0,4)">
+              <td>
+                <div class="td-user">
+                  <div class="mini-avatar">{{ a.nombre.charAt(0) }}</div>
+                  <div>
+                    <div class="td-bold">{{ a.nombre }}</div>
+                    <div class="td-sub">{{ a.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>📍 {{ a.region }}</td>
+              <td>{{ a.productos }}</td>
+              <td><span [class]="'badge ' + estadoBadgeClass(a.estado)">{{ a.estado }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== SECCIÓN: AGRICULTORES ===== -->
+    <section *ngIf="seccionActiva() === 'agricultores'" class="content-section">
+      <div class="table-header">
+        <h2>Todos los agricultores</h2>
+        <span class="table-count">{{ agricultores.length }} registros</span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Agricultor</th>
+              <th>Región</th>
+              <th>Productos</th>
+              <th>Fecha registro</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of agricultores">
+              <td class="td-id">{{ a.id }}</td>
+              <td>
+                <div class="td-user">
+                  <div class="mini-avatar">{{ a.nombre.charAt(0) }}</div>
+                  <div>
+                    <div class="td-bold">{{ a.nombre }}</div>
+                    <div class="td-sub">{{ a.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>📍 {{ a.region }}</td>
+              <td>{{ a.productos }}</td>
+              <td>{{ a.fechaRegistro }}</td>
+              <td><span [class]="'badge ' + estadoBadgeClass(a.estado)">{{ a.estado }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== SECCIÓN: PEDIDOS ===== -->
+    <section *ngIf="seccionActiva() === 'pedidos'" class="content-section">
+      <div class="table-header">
+        <h2>Todos los pedidos</h2>
+        <span class="table-count">{{ pedidos.length }} registros</span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>N° Pedido</th>
+              <th>Agricultor</th>
+              <th>Cliente</th>
+              <th>Producto</th>
+              <th>Monto</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of pedidos">
+              <td class="td-id">{{ p.id }}</td>
+              <td class="td-bold">{{ p.agricultor }}</td>
+              <td>{{ p.cliente }}</td>
+              <td>{{ p.producto }}</td>
+              <td class="td-bold">{{ p.monto }}</td>
+              <td>{{ p.fecha }}</td>
+              <td><span [class]="'badge ' + estadoBadgeClass(p.estado)">{{ p.estado }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== SECCIÓN: REPORTES ===== -->
+    <section *ngIf="seccionActiva() === 'reportes'" class="content-section">
+      <div class="reportes-grid">
+
+        <div class="reporte-card">
+          <h3 class="reporte-title">📊 Ventas por agricultor</h3>
+          <div class="bar-chart">
+            <div class="bar-item">
+              <span class="bar-label">Carlos Mamani</span>
+              <div class="bar-track"><div class="bar-fill" style="width: 85%; background: #22c55e;"></div></div>
+              <span class="bar-val">S/ 5,700</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label">María Condori</span>
+              <div class="bar-track"><div class="bar-fill" style="width: 62%; background: #3b82f6;"></div></div>
+              <span class="bar-val">S/ 2,500</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label">Rosa Quispe</span>
+              <div class="bar-track"><div class="bar-fill" style="width: 30%; background: #8b5cf6;"></div></div>
+              <span class="bar-val">S/ 1,200</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label">Juan Flores</span>
+              <div class="bar-track"><div class="bar-fill" style="width: 16%; background: #eab308;"></div></div>
+              <span class="bar-val">S/ 640</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="reporte-card">
+          <h3 class="reporte-title">🗺️ Distribución por región</h3>
+          <div class="region-list">
+            <div class="region-item">
+              <span class="region-dot" style="background:#22c55e;"></span>
+              <span class="region-name">Cusco</span>
+              <span class="region-pct">40%</span>
+            </div>
+            <div class="region-item">
+              <span class="region-dot" style="background:#3b82f6;"></span>
+              <span class="region-name">Puno</span>
+              <span class="region-pct">20%</span>
+            </div>
+            <div class="region-item">
+              <span class="region-dot" style="background:#8b5cf6;"></span>
+              <span class="region-name">Arequipa</span>
+              <span class="region-pct">20%</span>
+            </div>
+            <div class="region-item">
+              <span class="region-dot" style="background:#eab308;"></span>
+              <span class="region-name">Ayacucho</span>
+              <span class="region-pct">10%</span>
+            </div>
+            <div class="region-item">
+              <span class="region-dot" style="background:#f97316;"></span>
+              <span class="region-name">Junín</span>
+              <span class="region-pct">10%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="reporte-card reporte-full">
+          <h3 class="reporte-title">📦 Estado de pedidos</h3>
+          <div class="estado-summary">
+            <div class="estado-chip" style="background:#dcfce7; color:#15803d;">
+              <span class="estado-num">2</span><span>Entregados</span>
+            </div>
+            <div class="estado-chip" style="background:#ede9fe; color:#6d28d9;">
+              <span class="estado-num">1</span><span>En camino</span>
+            </div>
+            <div class="estado-chip" style="background:#fef9c3; color:#a16207;">
+              <span class="estado-num">1</span><span>Pendientes</span>
+            </div>
+            <div class="estado-chip" style="background:#fee2e2; color:#b91c1c;">
+              <span class="estado-num">1</span><span>Cancelados</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>

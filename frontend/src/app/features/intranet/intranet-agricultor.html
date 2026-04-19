@@ -1,0 +1,212 @@
+<div class="intranet-layout" *ngIf="usuario">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">🌿</span>
+      <span class="brand-text">AgroLink</span>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">{{ usuario.nombre.charAt(0).toUpperCase() }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ usuario.nombre }}</span>
+        <span class="user-rol">🌾 Agricultor</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item" [class.active]="seccionActiva() === 'resumen'" (click)="irA('resumen')">
+        <span class="nav-icon">📊</span> Resumen
+      </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'cosechas'" (click)="irA('cosechas')">
+        <span class="nav-icon">🌱</span> Mis Cosechas
+      </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'pedidos'" (click)="irA('pedidos')">
+        <span class="nav-icon">📦</span> Mis Pedidos
+      </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'perfil'" (click)="irA('perfil')">
+        <span class="nav-icon">👤</span> Mi Perfil
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a routerLink="/" class="nav-item-link">
+        <span class="nav-icon">🏠</span> Ir al sitio
+      </a>
+      <button class="btn-logout" (click)="cerrarSesion()">
+        <span class="nav-icon">🚪</span> Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="intranet-main">
+
+    <!-- HEADER -->
+    <header class="intranet-header">
+      <div class="header-title">
+        <h1 *ngIf="seccionActiva() === 'resumen'">📊 Mi Resumen</h1>
+        <h1 *ngIf="seccionActiva() === 'cosechas'">🌱 Mis Cosechas</h1>
+        <h1 *ngIf="seccionActiva() === 'pedidos'">📦 Mis Pedidos</h1>
+        <h1 *ngIf="seccionActiva() === 'perfil'">👤 Mi Perfil</h1>
+      </div>
+      <div class="header-date">{{ usuario.email }}</div>
+    </header>
+
+    <!-- ===== SECCIÓN: RESUMEN ===== -->
+    <section *ngIf="seccionActiva() === 'resumen'" class="content-section">
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon">🌾</div>
+          <div class="kpi-data">
+            <span class="kpi-value">{{ totalCosechas }}</span>
+            <span class="kpi-label">Cosechas registradas</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-yellow">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-data">
+            <span class="kpi-value">{{ cosechasListas }}</span>
+            <span class="kpi-label">Listas para cosechar</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-icon">📦</div>
+          <div class="kpi-data">
+            <span class="kpi-value">{{ pedidosPendientes }}</span>
+            <span class="kpi-label">Pedidos pendientes</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-data">
+            <span class="kpi-value">{{ ingresosMes }}</span>
+            <span class="kpi-label">Ingresos este mes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alertas rápidas -->
+      <div class="alert-box alert-green">
+        <span class="alert-icon">🔔</span>
+        <span><strong>¡Atención!</strong> Tienes <strong>{{ cosechasListas }}</strong> cosecha(s) lista(s) para ser recolectada. Contacta al equipo logístico.</span>
+      </div>
+      <div class="alert-box alert-yellow">
+        <span class="alert-icon">📋</span>
+        <span><strong>{{ pedidosPendientes }}</strong> pedido(s) esperan tu confirmación de despacho.</span>
+      </div>
+
+      <!-- Cosechas recientes -->
+      <h2 class="section-subtitle">Cosechas recientes</h2>
+      <div class="cards-grid">
+        <div class="harvest-card" *ngFor="let c of cosechas.slice(0,3)">
+          <div class="harvest-emoji">{{ c.icono }}</div>
+          <div class="harvest-info">
+            <span class="harvest-name">{{ c.producto }}</span>
+            <span class="harvest-qty">{{ c.cantidad }}</span>
+            <span [class]="'badge ' + estadoBadgeClass(c.estado)">{{ c.estado }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECCIÓN: COSECHAS ===== -->
+    <section *ngIf="seccionActiva() === 'cosechas'" class="content-section">
+      <div class="table-header">
+        <h2>Registro de cosechas</h2>
+        <span class="table-count">{{ cosechas.length }} registros</span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Producto</th>
+              <th>Cantidad estimada</th>
+              <th>Hectáreas</th>
+              <th>Fecha estimada</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of cosechas">
+              <td class="td-id">{{ c.id }}</td>
+              <td>
+                <span class="td-icon">{{ c.icono }}</span> {{ c.producto }}
+              </td>
+              <td class="td-bold">{{ c.cantidad }}</td>
+              <td>{{ c.hectareas }} ha</td>
+              <td>{{ c.fecha }}</td>
+              <td><span [class]="'badge ' + estadoBadgeClass(c.estado)">{{ c.estado }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== SECCIÓN: PEDIDOS ===== -->
+    <section *ngIf="seccionActiva() === 'pedidos'" class="content-section">
+      <div class="table-header">
+        <h2>Historial de pedidos</h2>
+        <span class="table-count">{{ pedidos.length }} registros</span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>N° Pedido</th>
+              <th>Cliente</th>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Monto</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of pedidos">
+              <td class="td-id">{{ p.id }}</td>
+              <td>{{ p.cliente }}</td>
+              <td>{{ p.producto }}</td>
+              <td>{{ p.cantidad }}</td>
+              <td class="td-bold">{{ p.monto }}</td>
+              <td>{{ p.fecha }}</td>
+              <td><span [class]="'badge ' + estadoBadgeClass(p.estado)">{{ p.estado }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== SECCIÓN: PERFIL ===== -->
+    <section *ngIf="seccionActiva() === 'perfil'" class="content-section">
+      <div class="perfil-card">
+        <div class="perfil-avatar">{{ usuario.nombre.charAt(0).toUpperCase() }}</div>
+        <h2 class="perfil-nombre">{{ usuario.nombre }}</h2>
+        <span class="perfil-rol-badge">🌾 Agricultor verificado</span>
+        <div class="perfil-datos">
+          <div class="dato-item">
+            <span class="dato-label">Correo electrónico</span>
+            <span class="dato-value">{{ usuario.email }}</span>
+          </div>
+          <div class="dato-item">
+            <span class="dato-label">Rol en AgroLink</span>
+            <span class="dato-value">Productor / Agricultor</span>
+          </div>
+          <div class="dato-item">
+            <span class="dato-label">ID de cuenta</span>
+            <span class="dato-value dato-id">{{ usuario.id }}</span>
+          </div>
+          <div class="dato-item">
+            <span class="dato-label">Estado de cuenta</span>
+            <span class="dato-value"><span class="badge badge-entregado">✅ Activo</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>

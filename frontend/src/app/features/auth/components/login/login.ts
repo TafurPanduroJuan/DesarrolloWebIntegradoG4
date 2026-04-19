@@ -51,7 +51,7 @@ export class Login {
     const resultado = this.auth.login(email!, password!);
 
     if (resultado.ok) {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/intranet']);
     } else {
       this.error = resultado.mensaje;
       this.cargando = false;
