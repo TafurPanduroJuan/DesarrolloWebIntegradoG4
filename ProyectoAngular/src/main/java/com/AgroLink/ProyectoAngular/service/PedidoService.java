@@ -10,9 +10,13 @@ import com.AgroLink.ProyectoAngular.repository.PedidoRepository;
 @Service
 public class PedidoService {
     private final PedidoRepository pedidoRepository;
-    public PedidoService(PedidoRepository pedidoRepository) { this.pedidoRepository = pedidoRepository; }
+
+    public PedidoService(PedidoRepository pedidoRepository) {
+        this.pedidoRepository = pedidoRepository;
+    }
 
     public List<Pedido> listarTodos() { return pedidoRepository.findAll(); }
+    public List<Pedido> listarPorComprador(Long compradorId) { return pedidoRepository.findByCompradorId(compradorId); }
     public Pedido guardar(Pedido pedido) { return pedidoRepository.save(pedido); }
     public Pedido buscarPorId(Long id) { return pedidoRepository.findById(id).orElse(null); }
     public void eliminar(Long id) { pedidoRepository.deleteById(id); }

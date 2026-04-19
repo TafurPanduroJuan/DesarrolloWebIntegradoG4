@@ -15,16 +15,9 @@ public class CultivoService {
         this.cultivoRepository = cultivoRepository;
     }
 
-    //Función Listar
     public List<Cultivo> listarTodos() { return cultivoRepository.findAll(); }
-
-    //Función Guardar
+    public List<Cultivo> listarPorAgricultor(Long agricultorId) { return cultivoRepository.findByAgricultorId(agricultorId); }
     public Cultivo guardar(Cultivo cultivo) { return cultivoRepository.save(cultivo); }
-
-    //Función Buscar por ID
     public Cultivo buscarPorId(Long id) { return cultivoRepository.findById(id).orElse(null); }
-
-    //FuncióN Eliminar
     public void eliminar(Long id) { cultivoRepository.deleteById(id); }
-    
 }
