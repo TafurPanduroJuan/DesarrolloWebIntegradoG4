@@ -20,7 +20,7 @@ public class Lote {
     private Double cantidadKg;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "calidad_lote_enum")
+    @Column(name = "calidad")
     private CalidadLoteEnum calidad;
 
     private BigDecimal precioUnitario;

@@ -16,7 +16,7 @@ public class EventoProduccion {
     private Long cultivoId;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "tipo_evento_enum")
+    @Column(name = "tipo")
     private TipoEventoEnum tipo;
 
     private String descripcion;

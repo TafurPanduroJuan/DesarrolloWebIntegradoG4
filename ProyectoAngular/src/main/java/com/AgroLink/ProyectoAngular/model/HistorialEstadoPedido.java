@@ -16,11 +16,11 @@ public class HistorialEstadoPedido {
     private Long pedidoId;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "estado_pedido_enum")
+    @Column(name = "estado_anterior")
     private EstadoPedidoEnum estadoAnterior;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "estado_pedido_enum")
+    @Column(name = "estado_nuevo")
     private EstadoPedidoEnum estadoNuevo;
 
     private String observacion;

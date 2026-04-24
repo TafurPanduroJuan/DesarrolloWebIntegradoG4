@@ -16,7 +16,7 @@ public class MovimientoStock {
     private Long loteId;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "tipo_movimiento_enum")
+    @Column(name = "tipo")
     private TipoMovimientoEnum tipo;
 
     private Double cantidad;

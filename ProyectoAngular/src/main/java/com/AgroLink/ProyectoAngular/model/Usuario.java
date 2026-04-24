@@ -24,11 +24,11 @@ public class Usuario {
     private String telefono;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "rol_enum")
+    @Column(name = "rol")          
     private RolEnum rol;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "tipo_usuario_enum")
+    @Column(name = "tipo")
     private TipoUsuarioEnum tipo;
 
     private String dni;

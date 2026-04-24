@@ -17,7 +17,7 @@ public class Pedido {
     private Long compradorId;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "estado_pedido_enum")
+    @Column(name = "estado")
     private EstadoPedidoEnum estado;
 
     private String notasEspeciales;

@@ -20,7 +20,7 @@ public class Cultivo {
     private String nombreProducto;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "categoria_producto_enum")
+    @Column(name = "categoria")
     private CategoriaProductoEnum categoria;
 
     private Double areaTerrenoHa;
@@ -30,7 +30,7 @@ public class Cultivo {
     private LocalDate fechaCosechaEstimada;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "estado_cultivo_enum")
+    @Column(name = "estado")
     private EstadoCultivoEnum estado;
 
     private LocalDateTime fechaCreacion = LocalDateTime.now();

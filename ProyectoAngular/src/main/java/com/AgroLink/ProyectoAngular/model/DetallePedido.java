@@ -21,7 +21,7 @@ public class DetallePedido {
     private BigDecimal subtotal;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "estado_detalle_enum")
+    @Column(name = "estado_detalle")
     private EstadoDetalleEnum estadoDetalle;
 
     public Long getId() { return id; }
