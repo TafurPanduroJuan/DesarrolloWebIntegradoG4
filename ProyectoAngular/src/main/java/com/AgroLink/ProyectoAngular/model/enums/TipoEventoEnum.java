@@ -1,9 +1,10 @@
 package com.AgroLink.ProyectoAngular.model.enums;
 
 public enum TipoEventoEnum {
-    CLIMA,
-    PLAGA,
-    RIEGO,
+    SIEMBRA,
     FERTILIZACION,
-    OTRO
+    RIEGO,
+    CONTROL_PLAGAS,
+    COSECHA,
+    PERDIDA_PARCIAL
 }

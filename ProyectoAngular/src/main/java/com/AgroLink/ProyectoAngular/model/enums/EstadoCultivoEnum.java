@@ -4,5 +4,6 @@ public enum EstadoCultivoEnum {
     SEMBRADO,
     CRECIMIENTO,
     COSECHA,
-    POSTCOSECHA
+    FINALIZADO,
+    PERDIDA
 }

@@ -1,9 +1,11 @@
 package com.AgroLink.ProyectoAngular.model.enums;
 
 public enum CategoriaProductoEnum {
-    CEREAL,
-    FRUTA,
-    TUBERCULO,
-    BEBIDA,
-    VERDURA
+    FRUTAS,
+    VERDURAS,
+    TUBERCULOS,
+    CEREALES,
+    LEGUMBRES,
+    HORTALIZAS,
+    OTROS
 }
