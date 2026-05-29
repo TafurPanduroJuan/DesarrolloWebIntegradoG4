@@ -43,6 +43,44 @@ export interface ProductoAgrolink {
   fecha: string;
 }
 
+// ==========================================
+// INTERFACES CULTIVOS (RF02 · RF03 · RF16 · RF17)
+// ==========================================
+
+export type EstadoLote   = 'activo' | 'en_descanso' | 'en_preparacion' | 'inactivo';
+export type EtapaCultivo = 'sembrado' | 'crecimiento' | 'cosecha' | 'finalizado';
+export type TipoEvento   = 'siembra' | 'fertilizacion' | 'riego' | 'control_plagas' | 'cosecha' | 'perdida_parcial';
+
+export interface SeguimientoEntry {
+  id: string;
+  etapa: EtapaCultivo;
+  observacion: string;
+  fecha: string;
+}
+
+export interface EventoProduccion {
+  id: string;
+  tipo: TipoEvento;
+  observacion: string;
+  fecha: string;
+}
+
+export interface Cultivo {
+  id: string;
+  agricultorId: string;
+  producto: string;
+  variedad: string;
+  nombreLote: string;
+  area: number;
+  ubicacion: string;
+  fechaSiembra: string;
+  estadoLote: EstadoLote;
+  etapaActual: EtapaCultivo;
+  seguimiento: SeguimientoEntry[];
+  eventos: EventoProduccion[];
+  fechaCreacion: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -51,6 +89,7 @@ export class Auth {
   private readonly SESSION_KEY = 'agrolink_sesion';
   private readonly SOLICITUDES_KEY = 'agrolink_solicitudes_agr';
   private readonly PRODUCTOS_KEY = 'agrolink_productos';
+  private readonly CULTIVOS_KEY = 'agrolink_cultivos';
 
   constructor(private router: Router) {
     this.seedAdmin();
@@ -209,88 +248,147 @@ export class Auth {
     return this.getProductos().filter(p => p.agricultorId === agricultorId);
   }
 
- // RF13 & RF14: Registro con rol y estado
-registerWithRole(
-  nombre: string,
-  email: string,
-  password: string,
-  rol: RolUsuario,
-  extras: {
-    status: 'active' | 'pending';
-    location?: string;
-    mainProducts?: string[];
-    buyerType?: 'mayorista' | 'restaurante' | 'mercado';
-    contactPhone?: string;
-    contactAddress?: string;
-  }
-): { ok: boolean; mensaje: string } {
-  const usuarios = this.getUsuarios();
-  if (usuarios.find((u) => u.email === email)) {
-    return { ok: false, mensaje: 'Este correo ya está registrado.' };
-  }
+  // RF13 & RF14: Registro con rol y estado
+  registerWithRole(
+    nombre: string,
+    email: string,
+    password: string,
+    rol: RolUsuario,
+    extras: {
+      status: 'active' | 'pending';
+      location?: string;
+      mainProducts?: string[];
+      buyerType?: 'mayorista' | 'restaurante' | 'mercado';
+      contactPhone?: string;
+      contactAddress?: string;
+    }
+  ): { ok: boolean; mensaje: string } {
+    const usuarios = this.getUsuarios();
+    if (usuarios.find((u) => u.email === email)) {
+      return { ok: false, mensaje: 'Este correo ya está registrado.' };
+    }
 
-  const nuevo: Usuario = {
-    id: crypto.randomUUID(),
-    nombre,
-    email,
-    password,
-    rol,
-    createdAt: new Date().toISOString(),
-    status: extras.status,
-    ...(extras.location && { location: extras.location }),
-    ...(extras.mainProducts && { mainProducts: extras.mainProducts }),
-    ...(extras.buyerType && { buyerType: extras.buyerType }),
-    ...(extras.contactPhone && { contactPhone: extras.contactPhone }),
-    ...(extras.contactAddress && { contactAddress: extras.contactAddress }),
-  };
+    const nuevo: Usuario = {
+      id: crypto.randomUUID(),
+      nombre,
+      email,
+      password,
+      rol,
+      createdAt: new Date().toISOString(),
+      status: extras.status,
+      ...(extras.location && { location: extras.location }),
+      ...(extras.mainProducts && { mainProducts: extras.mainProducts }),
+      ...(extras.buyerType && { buyerType: extras.buyerType }),
+      ...(extras.contactPhone && { contactPhone: extras.contactPhone }),
+      ...(extras.contactAddress && { contactAddress: extras.contactAddress }),
+    };
 
-  usuarios.push(nuevo);
-  localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
-
-  const mensaje = extras.status === 'pending'
-    ? 'Solicitud enviada. Un administrador aprobará tu cuenta.'
-    : 'Cuenta creada exitosamente.';
-  return { ok: true, mensaje };
-}
-
-// RF15: Aprobar agricultor
-aprobarAgricultor(id: string): void {
-  const usuarios = this.getUsuarios();
-  const idx = usuarios.findIndex(u => u.id === id);
-  if (idx !== -1) {
-    usuarios[idx].status = 'active';
+    usuarios.push(nuevo);
     localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
-  }
-}
 
-// RF15: Observar o Rechazar (con nota)
-gestionarSolicitud(id: string, accion: 'observar' | 'rechazar', nota: string): void {
-  const usuarios = this.getUsuarios();
-  const idx = usuarios.findIndex(u => u.id === id);
-  if (idx !== -1) {
-    usuarios[idx].adminNote = nota;
-    usuarios[idx].status = accion === 'rechazar' ? 'inactive' : 'pending';
-    localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+    const mensaje = extras.status === 'pending'
+      ? 'Solicitud enviada. Un administrador aprobará tu cuenta.'
+      : 'Cuenta creada exitosamente.';
+    return { ok: true, mensaje };
   }
-}
 
-// RF01: Activar/Desactivar usuario 
-toggleUsuarioStatus(id: string): void {
-  const usuarios = this.getUsuarios();
-  const idx = usuarios.findIndex(u => u.id === id);
-  if (idx !== -1 && usuarios[idx].rol !== 'admin') {
-    usuarios[idx].status = usuarios[idx].status === 'active' ? 'inactive' : 'active';
-    localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+  // RF15: Aprobar agricultor
+  aprobarAgricultor(id: string): void {
+    const usuarios = this.getUsuarios();
+    const idx = usuarios.findIndex(u => u.id === id);
+    if (idx !== -1) {
+      usuarios[idx].status = 'active';
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+    }
   }
-}
-// Método para marcar usuario como rechazado en su perfil
-marcarUsuarioComoRechazado(email: string, motivo: string): void {
-  const usuarios = this.getUsuarios();
-  const idx = usuarios.findIndex(u => u.email === email);
-  if (idx !== -1) {
-    usuarios[idx].status = 'inactive'; // Marcar como inactivo
-    usuarios[idx].adminNote = motivo; // Guardar motivo
-    localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+
+  // RF15: Observar o Rechazar (con nota)
+  gestionarSolicitud(id: string, accion: 'observar' | 'rechazar', nota: string): void {
+    const usuarios = this.getUsuarios();
+    const idx = usuarios.findIndex(u => u.id === id);
+    if (idx !== -1) {
+      usuarios[idx].adminNote = nota;
+      usuarios[idx].status = accion === 'rechazar' ? 'inactive' : 'pending';
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+    }
   }
-}
+
+  // RF01: Activar/Desactivar usuario 
+  toggleUsuarioStatus(id: string): void {
+    const usuarios = this.getUsuarios();
+    const idx = usuarios.findIndex(u => u.id === id);
+    if (idx !== -1 && usuarios[idx].rol !== 'admin') {
+      usuarios[idx].status = usuarios[idx].status === 'active' ? 'inactive' : 'active';
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+    }
+  }
+
+  // Método para marcar usuario como rechazado en su perfil
+  marcarUsuarioComoRechazado(email: string, motivo: string): void {
+    const usuarios = this.getUsuarios();
+    const idx = usuarios.findIndex(u => u.email === email);
+    if (idx !== -1) {
+      usuarios[idx].status = 'inactive'; // Marcar como inactivo
+      usuarios[idx].adminNote = motivo; // Guardar motivo
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+    }
+  }
+
+  // ==========================================
+  // CULTIVOS (RF02 · RF03 · RF16 · RF17)
+  // ==========================================
+
+  getCultivos(): Cultivo[] {
+    return JSON.parse(localStorage.getItem(this.CULTIVOS_KEY) || '[]');
+  }
+
+  getCultivosPorAgricultor(agricultorId: string): Cultivo[] {
+    return this.getCultivos().filter(c => c.agricultorId === agricultorId);
+  }
+
+  guardarCultivo(datos: Omit<Cultivo, 'id' | 'agricultorId' | 'fechaCreacion' | 'seguimiento' | 'eventos'>): void {
+    const usuario = this.getUsuarioActual();
+    if (!usuario || usuario.rol !== 'agricultor') return;
+    const cultivos = this.getCultivos();
+    cultivos.push({
+      ...datos,
+      id: crypto.randomUUID(),
+      agricultorId: usuario.id,
+      fechaCreacion: new Date().toISOString().split('T')[0],
+      seguimiento: [],
+      eventos: [],
+    });
+    localStorage.setItem(this.CULTIVOS_KEY, JSON.stringify(cultivos));
+  }
+
+  actualizarLoteCultivo(cultivoId: string, lote: Pick<Cultivo, 'nombreLote' | 'area' | 'ubicacion' | 'estadoLote'>): void {
+    const cultivos = this.getCultivos();
+    const c = cultivos.find(x => x.id === cultivoId);
+    if (c) {
+      c.nombreLote = lote.nombreLote;
+      c.area       = lote.area;
+      c.ubicacion  = lote.ubicacion;
+      c.estadoLote = lote.estadoLote;
+      localStorage.setItem(this.CULTIVOS_KEY, JSON.stringify(cultivos));
+    }
+  }
+
+  agregarSeguimiento(cultivoId: string, entry: Omit<SeguimientoEntry, 'id'>): void {
+    const cultivos = this.getCultivos();
+    const c = cultivos.find(x => x.id === cultivoId);
+    if (c) {
+      c.etapaActual = entry.etapa;
+      c.seguimiento.push({ ...entry, id: crypto.randomUUID() });
+      localStorage.setItem(this.CULTIVOS_KEY, JSON.stringify(cultivos));
+    }
+  }
+
+  agregarEvento(cultivoId: string, evento: Omit<EventoProduccion, 'id'>): void {
+    const cultivos = this.getCultivos();
+    const c = cultivos.find(x => x.id === cultivoId);
+    if (c) {
+      c.eventos.push({ ...evento, id: crypto.randomUUID() });
+      localStorage.setItem(this.CULTIVOS_KEY, JSON.stringify(cultivos));
+    }
+  }
 }
