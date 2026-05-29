@@ -9,6 +9,14 @@ export interface Usuario {
   email: string;
   password: string;
   rol: RolUsuario;
+  status?: 'active' | 'inactive' | 'pending'; // RF13/RF14
+  location?: string;                           // RF13
+  mainProducts?: string[];                     // RF13
+  buyerType?: 'mayorista' | 'restaurante' | 'mercado'; // RF14
+  contactPhone?: string;                       // RF14
+  contactAddress?: string;                     // RF14
+  adminNote?: string;                          // RF15 
+  createdAt?: string;
 }
 
 export interface SolicitudAgricultor {
@@ -200,4 +208,89 @@ export class Auth {
   getProductosPorAgricultor(agricultorId: string): ProductoAgrolink[] {
     return this.getProductos().filter(p => p.agricultorId === agricultorId);
   }
+
+ // RF13 & RF14: Registro con rol y estado
+registerWithRole(
+  nombre: string,
+  email: string,
+  password: string,
+  rol: RolUsuario,
+  extras: {
+    status: 'active' | 'pending';
+    location?: string;
+    mainProducts?: string[];
+    buyerType?: 'mayorista' | 'restaurante' | 'mercado';
+    contactPhone?: string;
+    contactAddress?: string;
+  }
+): { ok: boolean; mensaje: string } {
+  const usuarios = this.getUsuarios();
+  if (usuarios.find((u) => u.email === email)) {
+    return { ok: false, mensaje: 'Este correo ya está registrado.' };
+  }
+
+  const nuevo: Usuario = {
+    id: crypto.randomUUID(),
+    nombre,
+    email,
+    password,
+    rol,
+    createdAt: new Date().toISOString(),
+    status: extras.status,
+    ...(extras.location && { location: extras.location }),
+    ...(extras.mainProducts && { mainProducts: extras.mainProducts }),
+    ...(extras.buyerType && { buyerType: extras.buyerType }),
+    ...(extras.contactPhone && { contactPhone: extras.contactPhone }),
+    ...(extras.contactAddress && { contactAddress: extras.contactAddress }),
+  };
+
+  usuarios.push(nuevo);
+  localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+
+  const mensaje = extras.status === 'pending'
+    ? 'Solicitud enviada. Un administrador aprobará tu cuenta.'
+    : 'Cuenta creada exitosamente.';
+  return { ok: true, mensaje };
+}
+
+// RF15: Aprobar agricultor
+aprobarAgricultor(id: string): void {
+  const usuarios = this.getUsuarios();
+  const idx = usuarios.findIndex(u => u.id === id);
+  if (idx !== -1) {
+    usuarios[idx].status = 'active';
+    localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+  }
+}
+
+// RF15: Observar o Rechazar (con nota)
+gestionarSolicitud(id: string, accion: 'observar' | 'rechazar', nota: string): void {
+  const usuarios = this.getUsuarios();
+  const idx = usuarios.findIndex(u => u.id === id);
+  if (idx !== -1) {
+    usuarios[idx].adminNote = nota;
+    usuarios[idx].status = accion === 'rechazar' ? 'inactive' : 'pending';
+    localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+  }
+}
+
+// RF01: Activar/Desactivar usuario 
+toggleUsuarioStatus(id: string): void {
+  const usuarios = this.getUsuarios();
+  const idx = usuarios.findIndex(u => u.id === id);
+  if (idx !== -1 && usuarios[idx].rol !== 'admin') {
+    usuarios[idx].status = usuarios[idx].status === 'active' ? 'inactive' : 'active';
+    localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+  }
+}
+// Método para marcar usuario como rechazado en su perfil
+marcarUsuarioComoRechazado(email: string, motivo: string): void {
+  const usuarios = this.getUsuarios();
+  const idx = usuarios.findIndex(u => u.email === email);
+  if (idx !== -1) {
+    usuarios[idx].status = 'inactive'; // Marcar como inactivo
+    usuarios[idx].adminNote = motivo; // Guardar motivo
+    localStorage.setItem(this.USERS_KEY, JSON.stringify(usuarios));
+  }
+}
 }

@@ -16,6 +16,34 @@
                     <!-- Body -->
                     <div class="card-body px-4 py-4">
                         <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+                        
+                            <!-- === (RF13/RF14) === -->
+                        <div class="mb-4 p-3 bg-light rounded-3 border">
+                        <label class="form-label fw-semibold small text-dark d-block mb-2">
+                            <i class="bi bi-person-badge me-1 text-success"></i>Tipo de cuenta
+                        </label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="tipoCuenta" id="comprador"
+                                value="comprador" [checked]="tipoCuenta === 'comprador'"
+                                (change)="onTipoCuentaChange('comprador')" autocomplete="off">
+                            <label class="btn btn-outline-success" for="comprador">
+                            <i class="bi bi-cart me-1"></i>Comprador
+                            </label>
+
+                            <input type="radio" class="btn-check" name="tipoCuenta" id="agricultor"
+                                value="agricultor" [checked]="tipoCuenta === 'agricultor'"
+                                (change)="onTipoCuentaChange('agricultor')" autocomplete="off">
+                            <label class="btn btn-outline-success" for="agricultor">
+                            <i class="bi bi-flower1 me-1"></i>Agricultor
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{ tipoCuenta === 'agricultor' ? 
+                            'Tu cuenta estará pendiente de aprobación.' : 
+                            'Tu cuenta se activará inmediatamente.' }}
+                        </small>
+                        </div>
 
                             <!-- Nombre -->
                             <div class="mb-3">
@@ -74,6 +102,79 @@
                                 <div class="invalid-feedback">
                                     Las contraseñas no coinciden.
                                 </div>
+                            </div>
+                            
+                            <!-- === CAMPOS CONDICIONALES (RF13/RF14) === -->
+                            <div *ngIf="tipoCuenta === 'agricultor'" class="mb-3 p-3 bg-success-subtle rounded-3 border border-success">
+                            <h6 class="fw-semibold text-success mb-3">
+                                <i class="bi bi-flower1 me-1"></i>Información de agricultor
+                            </h6>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small text-dark" for="location">
+                                <i class="bi bi-geo-alt me-1"></i>Ubicación (Región/Provincia)
+                                </label>
+                                <input id="location" type="text" class="form-control rounded-3"
+                                    [class.is-invalid]="locationInvalido" formControlName="location"
+                                    placeholder="Ej: Cajamarca, San Martín" />
+                                <div class="invalid-feedback" *ngIf="locationInvalido">
+                                La ubicación es requerida.
+                                </div>
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label fw-semibold small text-dark" for="mainProducts">
+                                <i class="bi bi-basket me-1"></i>Productos principales (separados por coma)
+                                </label>
+                                <input id="mainProducts" type="text" class="form-control rounded-3"
+                                    [class.is-invalid]="mainProductsInvalido" formControlName="mainProducts"
+                                    placeholder="Ej: papa, maíz, tomate" />
+                                <div class="invalid-feedback" *ngIf="mainProductsInvalido">
+                                Ingresa al menos un producto.
+                                </div>
+                                <small class="text-muted">Separa con comas (,)</small>
+                            </div>
+                            </div>
+
+                            <div *ngIf="tipoCuenta === 'comprador'" class="mb-3 p-3 bg-primary-subtle rounded-3 border border-primary">
+                            <h6 class="fw-semibold text-primary mb-3">
+                                <i class="bi bi-cart me-1"></i>Información comercial
+                            </h6>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small text-dark" for="buyerType">
+                                <i class="bi bi-building me-1"></i>Tipo de comprador
+                                </label>
+                                <select id="buyerType" class="form-select rounded-3"
+                                        [class.is-invalid]="buyerTypeInvalido" formControlName="buyerType">
+                                <option value="">Selecciona una opción</option>
+                                <option value="mayorista">Mayorista</option>
+                                <option value="restaurante">Restaurante / HORECA</option>
+                                <option value="mercado">Mercado local</option>
+                                </select>
+                                <div class="invalid-feedback" *ngIf="buyerTypeInvalido">
+                                Selecciona el tipo de comprador.
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small text-dark" for="ruc">
+                                <i class="bi bi-credit-card me-1"></i>RUC *
+                                </label>
+                                <input id="ruc" type="text" class="form-control rounded-3"
+                                    [class.is-invalid]="rucInvalido" formControlName="ruc"
+                                    placeholder="Ej: 12345678901" maxlength="11" />
+                                <div class="invalid-feedback" *ngIf="rucInvalido">
+                                El RUC debe tener 11 dígitos.
+                                </div>
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label fw-semibold small text-dark" for="contactAddress">
+                                <i class="bi bi-geo-alt me-1"></i>Dirección *
+                                </label>
+                                <input id="contactAddress" type="text" class="form-control rounded-3"
+                                    [class.is-invalid]="contactAddressInvalido" formControlName="contactAddress"
+                                    placeholder="Ej: Av. Principal 123, Lima" />
+                                <div class="invalid-feedback" *ngIf="contactAddressInvalido">
+                                La dirección es requerida.
+                                </div>
+                            </div>
                             </div>
 
                             <!-- Términos -->
