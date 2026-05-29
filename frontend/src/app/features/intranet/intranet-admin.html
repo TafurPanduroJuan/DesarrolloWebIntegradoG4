@@ -57,7 +57,6 @@
 
     <!-- ===== SECCIÓN: RESUMEN ADMIN ===== -->
     <section *ngIf="seccionActiva() === 'resumen'" class="content-section">
-
       <div class="kpi-grid">
         <div class="kpi-card kpi-green">
           <div class="kpi-icon">👨‍🌾</div>
@@ -104,7 +103,6 @@
         <span class="alert-icon">✅</span>
         <span>¡Todo al día! No hay peticiones pendientes por revisar.</span>
       </div>
-
     </section>
 
     <!-- ===== SECCIÓN: SOLICITUDES AGRICULTORES ===== -->
@@ -146,6 +144,7 @@
               <td>
                 <div class="d-flex gap-2" *ngIf="s.estado === 'pendiente'">
                   <button class="btn btn-sm btn-success rounded-pill" (click)="aprobarSolicitud(s.id)">Aprobar</button>
+                  <button class="btn btn-sm btn-warning rounded-pill" (click)="observarSolicitud(s.id)">Observar</button>
                   <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="rechazarSolicitud(s.id)">Rechazar</button>
                 </div>
               </td>
@@ -215,6 +214,8 @@
               <th>Usuario</th>
               <th>Email</th>
               <th>Rol Actual</th>
+              <th>Estado</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -231,6 +232,30 @@
                   }">
                   {{ u.rol | uppercase }}
                 </span>
+              </td>
+              <td>
+                <span class="badge" 
+                  [ngClass]="{
+                    'bg-success': u.status === 'active',
+                    'bg-warning': u.status === 'pending',
+                    'bg-secondary': u.status === 'inactive'
+                  }">
+                  {{ estado(u.status) }}
+                </span>
+              </td>
+              <td>
+                <div class="d-flex gap-2" *ngIf="u.rol !== 'admin'">
+                  <button class="btn btn-sm btn-outline-success" 
+                          [disabled]="u.status === 'active'"
+                          (click)="toggleUsuario(u.id)">
+                    Activar
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning" 
+                          [disabled]="u.status === 'inactive'"
+                          (click)="toggleUsuario(u.id)">
+                    Desactivar
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>

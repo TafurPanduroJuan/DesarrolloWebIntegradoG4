@@ -3,33 +3,118 @@
   min-height: 100vh;
 }
 
+.register-page .card {
+    background-color: #ffffff;
+    border-radius: 20px !important; 
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important; 
+}
+
 .card-header-agrolink {
-  background-color: #2d5a27;
+    background-color: #2b5329; 
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
 }
 
+.card-header-agrolink .fs-4 {
+    font-size: 1.6rem !important;
+    letter-spacing: -0.5px;
+}
+
+.card-header-agrolink p {
+    font-size: 0.88rem;
+    color: #cbdccb !important;
+}
+
+.register-page .form-label {
+    color: #2b5329 !important;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.register-page .form-control,
+.register-page .form-select {
+    border: 1px solid #dae4da;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+    color: #495057;
+    border-radius: 10px !important;
+    transition: all 0.2s ease-in-out;
+}
+
+.register-page .form-control:focus,
+.register-page .form-select:focus {
+    border-color: #2b5329;
+    box-shadow: 0 0 0 0.25rem rgba(43, 83, 41, 0.15);
+    background-color: #fff;
+}
+
+.register-page .input-group .form-control {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.register-page .input-group .btn-outline-secondary {
+    border: 1px solid #dae4da;
+    border-left: none;
+    border-top-right-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+    background-color: #fff;
+    color: #7a8b7a;
+}
 .btn-agrolink {
-  background-color: #2d5a27;
-  color: #fff;
-  border: none;
-  transition: background-color 0.2s ease;
+    background-color: #2b5329 !important;
+    border-color: #2b5329 !important;
+    color: #ffffff !important;
+    padding: 0.75rem !important;
+    font-size: 1.05rem;
+    border-radius: 10px !important;
+    transition: background-color 0.2s ease;
 }
 
-.btn-agrolink:hover:not(:disabled) {
-  background-color: #1e3d1a;
-  color: #fff;
+.btn-agrolink:hover {
+    background-color: #213f20 !important;
+    border-color: #213f20 !important;
 }
 
-.btn-agrolink:disabled {
-  background-color: #6a9b64;
-  color: #fff;
+.register-page .btn-outline-success {
+    border-color: #2b5329;
+    color: #2b5329;
+    padding: 0.6rem;
+    font-size: 0.95rem;
 }
 
-.form-control:focus {
-  border-color: #2d5a27;
-  box-shadow: 0 0 0 0.2rem rgba(45, 90, 39, 0.2);
+.register-page .btn-check:checked + .btn-outline-success {
+    background-color: #2b5329;
+    border-color: #2b5329;
+    color: #fff;
 }
 
-.form-check-input:checked {
-  background-color: #2d5a27;
-  border-color: #2d5a27;
+.register-page .bg-success-subtle,
+.register-page .bg-primary-subtle {
+    background-color: #f4faf4 !important;
+    border: 1px dashed #2b5329 !important;
 }
+
+.register-page .text-success,
+.register-page .text-primary {
+    color: #2b5329 !important;
+}
+
+.register-page .form-check-input:checked {
+    background-color: #2b5329;
+    border-color: #2b5329;
+}
+
+.register-page a.text-success {
+    color: #2b5329 !important;
+    font-weight: 600;
+}
+
+.register-page a.text-success:hover {
+    text-decoration: underline !important;
+}
+
+.register-page .text-muted {
+    color: #6c757d !important;
+}
+

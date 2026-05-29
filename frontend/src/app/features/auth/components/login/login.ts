@@ -23,12 +23,10 @@ export class Login {
     private auth: Auth,
     private router: Router,
   ) {
-
     this.form = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-  });
-
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+    });
   }
 
   get emailInvalido() {
@@ -40,21 +38,35 @@ export class Login {
   }
 
   onSubmit() {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+  if (this.form.invalid) {
+    this.form.markAllAsTouched();
+    return;
+  }
+  this.cargando = true;
+  this.error = '';
+
+  const { email, password } = this.form.value;
+  const resultado = this.auth.login(email!, password!);
+
+  if (resultado.ok) {
+    // === OBTENER EL USUARIO LOGUEADO Y VERIFICAR SU ESTADO ===
+    const usuario = this.auth.getUsuarioActual();
+    
+    if (usuario?.status === 'pending') {
+      this.error = 'Tu cuenta está pendiente de aprobación. Porfavor, espere respuesta del administrador.';
+      this.cargando = false;
       return;
     }
-    this.cargando = true;
-    this.error = '';
 
-    const { email, password } = this.form.value;
-    const resultado = this.auth.login(email!, password!);
-
-    if (resultado.ok) {
-      this.router.navigate(['/intranet']);
-    } else {
-      this.error = resultado.mensaje;
+    if (usuario?.status === 'inactive') {
+      this.error = 'Tu cuenta ha sido rechazada. Contacta al administrador.';
       this.cargando = false;
+      return;
     }
+    this.router.navigate(['/intranet']);
+  } else {
+    this.error = resultado.mensaje;
+    this.cargando = false;
   }
+}
 }
