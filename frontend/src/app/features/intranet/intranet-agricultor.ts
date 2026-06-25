@@ -2,11 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import {
-  Auth, Usuario, ProductoAgrolink,
-  Cultivo, SeguimientoEntry, EventoProduccion,
-  EstadoLote, EtapaCultivo, TipoEvento
-} from '../auth/services/auth';
+import { Auth, UsuarioSesion, ProductoAgrolink } from '../auth/services/auth';
+import { CultivoService, Cultivo, SeguimientoEntry, EventoProduccion, EstadoLote, EtapaCultivo, TipoEvento } from './cultivo.service';
 
 @Component({
   selector: 'app-intranet-agricultor',
@@ -16,7 +13,7 @@ import {
   styleUrl: './intranet-agricultor.css',
 })
 export class IntranetAgricultor implements OnInit {
-  usuario: Usuario | null = null;
+  usuario: UsuarioSesion | null = null;
   seccionActiva = signal<string>('resumen');
 
   // ──────────────────────────────────────────
@@ -82,12 +79,12 @@ export class IntranetAgricultor implements OnInit {
   };
   mensajeExitoEvento = '';
 
-  constructor(private auth: Auth, private router: Router) {}
+  constructor(private auth: Auth, private cultivos: CultivoService, private router: Router) {}
 
   ngOnInit() {
     this.usuario = this.auth.getUsuarioActual();
     // Doble validación, por si entra directo a la URL
-    if (!this.usuario || this.usuario.rol !== 'agricultor') {
+    if (!this.usuario || this.usuario.rol !== 'AGRICULTOR') {
       this.router.navigate(['/']);
       return;
     }
@@ -96,8 +93,8 @@ export class IntranetAgricultor implements OnInit {
 
   cargarDatos() {
     if (this.usuario) {
-      this.misProductos = this.auth.getProductosPorAgricultor(this.usuario.id);
-      this.misCultivos  = this.auth.getCultivosPorAgricultor(this.usuario.id);
+      this.misProductos = this.auth.getProductosPorAgricultor(String(this.usuario.id));
+      this.misCultivos = this.cultivos.getCultivosPorAgricultor(String(this.usuario.id));
     }
   }
 
@@ -139,7 +136,7 @@ export class IntranetAgricultor implements OnInit {
   // CULTIVOS — RF02: Registrar cultivo
   // ──────────────────────────────────────────
   guardarCultivo() {
-    this.auth.guardarCultivo({ ...this.formCultivo });
+    this.cultivos.guardarCultivo({ ...this.formCultivo });
     this.formCultivo = {
       producto: '', variedad: '', fechaSiembra: '', etapaActual: 'sembrado',
       nombreLote: '', area: 0, ubicacion: '', estadoLote: 'activo',
@@ -166,7 +163,7 @@ export class IntranetAgricultor implements OnInit {
 
   guardarLote() {
     if (!this.cultivoSeleccionado) return;
-    this.auth.actualizarLoteCultivo(this.cultivoSeleccionado.id, { ...this.formLote });
+    this.cultivos.actualizarLoteCultivo(this.cultivoSeleccionado.id, { ...this.formLote });
     this.mensajeExitoLote = '¡Lote actualizado correctamente!';
     setTimeout(() => this.mensajeExitoLote = '', 4000);
     this.cargarDatos();
@@ -189,7 +186,7 @@ export class IntranetAgricultor implements OnInit {
 
   guardarSeguimiento() {
     if (!this.cultivoSeleccionado) return;
-    this.auth.agregarSeguimiento(this.cultivoSeleccionado.id, { ...this.formSeguimiento });
+    this.cultivos.agregarSeguimiento(this.cultivoSeleccionado.id, { ...this.formSeguimiento });
     this.formSeguimiento = { etapa: this.formSeguimiento.etapa, observacion: '', fecha: new Date().toISOString().split('T')[0] };
     this.mensajeExitoSeguimiento = '¡Seguimiento registrado!';
     setTimeout(() => this.mensajeExitoSeguimiento = '', 4000);
@@ -212,7 +209,7 @@ export class IntranetAgricultor implements OnInit {
 
   guardarEvento() {
     if (!this.cultivoSeleccionado) return;
-    this.auth.agregarEvento(this.cultivoSeleccionado.id, { ...this.formEvento });
+    this.cultivos.agregarEvento(this.cultivoSeleccionado.id, { ...this.formEvento });
     this.formEvento = { tipo: this.formEvento.tipo, observacion: '', fecha: new Date().toISOString().split('T')[0] };
     this.mensajeExitoEvento = '¡Evento registrado!';
     setTimeout(() => this.mensajeExitoEvento = '', 4000);
