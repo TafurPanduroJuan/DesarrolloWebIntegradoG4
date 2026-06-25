@@ -129,4 +129,13 @@ export class Auth {
     });
     localStorage.setItem(this.PRODUCTOS_KEY, JSON.stringify(productos));
   }
+
+  actualizarEstadoProducto(id: string, nuevoEstado: 'aprobado' | 'rechazado'): void {
+    const productos = this.getProductos();
+    const p = productos.find(x => x.id === id);
+    if (p) {
+      p.estado = nuevoEstado;
+      localStorage.setItem(this.PRODUCTOS_KEY, JSON.stringify(productos));
+    }
+  }
 }
