@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { Auth, Usuario } from '../../../features/auth/services/auth';
+import { Auth, UsuarioSesion } from '../../../features/auth/services/auth';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -11,7 +11,7 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./navbar.css'],
 })
 export class Navbar {
-  get usuarioActual(): Usuario | null {
+  get usuarioActual(): UsuarioSesion | null {
     return this.auth.getUsuarioActual();
   }
 

@@ -46,27 +46,19 @@ export class Login {
   this.error = '';
 
   const { email, password } = this.form.value;
-  const resultado = this.auth.login(email!, password!);
 
-  if (resultado.ok) {
-    // === OBTENER EL USUARIO LOGUEADO Y VERIFICAR SU ESTADO ===
-    const usuario = this.auth.getUsuarioActual();
-    
-    if (usuario?.status === 'pending') {
-      this.error = 'Tu cuenta está pendiente de aprobación. Porfavor, espere respuesta del administrador.';
+  this.auth.login(email!, password!).subscribe({
+    next: () => {
+      this.router.navigate(['/intranet']);
+    },
+    error: (err) => {
       this.cargando = false;
-      return;
-    }
-
-    if (usuario?.status === 'inactive') {
-      this.error = 'Tu cuenta ha sido rechazada. Contacta al administrador.';
-      this.cargando = false;
-      return;
-    }
-    this.router.navigate(['/intranet']);
-  } else {
-    this.error = resultado.mensaje;
-    this.cargando = false;
-  }
+      if (err.status === 401) {
+        this.error = 'Correo o contraseña incorrectos.';
+      } else {
+        this.error = 'No se pudo conectar con el servidor. Intenta de nuevo.';
+      }
+    },
+  });
 }
 }

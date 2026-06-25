@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { Auth, Usuario } from '../../features/auth/services/auth';
+import { Auth, UsuarioSesion } from '../../features/auth/services/auth';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,7 +11,7 @@ import { Auth, Usuario } from '../../features/auth/services/auth';
   styleUrl: './dashboard.css',
 })
 export class Dashboard implements OnInit {
-  usuario: Usuario | null = null;
+  usuario: UsuarioSesion | null = null;
 
   constructor(private auth: Auth, private router: Router) {}
 

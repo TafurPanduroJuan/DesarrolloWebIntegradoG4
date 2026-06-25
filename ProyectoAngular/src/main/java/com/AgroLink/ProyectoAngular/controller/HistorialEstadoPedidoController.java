@@ -11,7 +11,7 @@ import com.AgroLink.ProyectoAngular.service.HistorialEstadoPedidoService;
 
 @RestController
 @RequestMapping("/api/historial-pedidos")
-@CrossOrigin(origins = "*")
+
 public class HistorialEstadoPedidoController {
 
     private final HistorialEstadoPedidoService historialService;

@@ -3,7 +3,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { Auth } from '../../services/auth';
+import { Auth, RegisterRequest } from '../../services/auth';
 
 function passwordsCoinciden(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -35,14 +35,13 @@ export class Register {
     this.form = this.fb.group(
       {
         nombre: ['', [Validators.required, Validators.minLength(2)]],
+        apellido: ['', [Validators.required, Validators.minLength(2)]],
         email: ['', [Validators.required, Validators.email]],
         password: ['', [Validators.required, Validators.minLength(6)]],
         confirmar: ['', Validators.required],
         terminos: [false, Validators.requiredTrue],
-        // Campos agrícolas
         location: [''],
         mainProducts: [''],
-        // Campos compradores 
         buyerType: [''],
         ruc: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
         contactAddress: ['', [Validators.required]],
@@ -53,7 +52,7 @@ export class Register {
 
   onTipoCuentaChange(tipo: 'comprador' | 'agricultor'): void {
     this.tipoCuenta = tipo;
-    
+
     if (tipo === 'agricultor') {
       this.form.patchValue({ buyerType: '', contactAddress: '' });
       this.form.get('location')?.setValidators([Validators.required]);
@@ -69,52 +68,27 @@ export class Register {
       this.form.get('ruc')?.setValidators([Validators.required]);
       this.form.get('contactAddress')?.setValidators([Validators.required]);
     }
-    
+
     ['location', 'mainProducts', 'buyerType', 'ruc', 'contactAddress'].forEach(field => {
       this.form.get(field)?.updateValueAndValidity();
     });
   }
 
-  get nombreInvalido() {
-    return this.form.get('nombre')?.invalid && this.form.get('nombre')?.touched;
-  }
-  get emailInvalido() {
-    return this.form.get('email')?.invalid && this.form.get('email')?.touched;
-  }
-  get passwordInvalido() {
-    return this.form.get('password')?.invalid && this.form.get('password')?.touched;
-  }
+  get nombreInvalido() { return this.form.get('nombre')?.invalid && this.form.get('nombre')?.touched; }
+  get apellidoInvalido() { return this.form.get('apellido')?.invalid && this.form.get('apellido')?.touched; }
+  get emailInvalido() { return this.form.get('email')?.invalid && this.form.get('email')?.touched; }
+  get passwordInvalido() { return this.form.get('password')?.invalid && this.form.get('password')?.touched; }
   get confirmarInvalido() {
     return (
       (this.form.get('confirmar')?.touched && this.form.errors?.['noCoinciden']) ||
       (this.form.get('confirmar')?.invalid && this.form.get('confirmar')?.touched)
     );
   }
-  get locationInvalido() {
-    return this.tipoCuenta === 'agricultor' &&
-           this.form.get('location')?.invalid &&
-           this.form.get('location')?.touched;
-  }
-  get mainProductsInvalido() {
-    return this.tipoCuenta === 'agricultor' &&
-           this.form.get('mainProducts')?.invalid &&
-           this.form.get('mainProducts')?.touched;
-  }
-  get buyerTypeInvalido() {
-    return this.tipoCuenta === 'comprador' &&
-           this.form.get('buyerType')?.invalid &&
-           this.form.get('buyerType')?.touched;
-  }
-  get contactAddressInvalido() {
-    return this.tipoCuenta === 'comprador' &&
-           this.form.get('contactAddress')?.invalid &&
-           this.form.get('contactAddress')?.touched;
-  }
-  get rucInvalido() {
-    return this.tipoCuenta === 'comprador' &&
-          this.form.get('ruc')?.invalid &&
-          this.form.get('ruc')?.touched;
-  }
+  get locationInvalido() { return this.tipoCuenta === 'agricultor' && this.form.get('location')?.invalid && this.form.get('location')?.touched; }
+  get mainProductsInvalido() { return this.tipoCuenta === 'agricultor' && this.form.get('mainProducts')?.invalid && this.form.get('mainProducts')?.touched; }
+  get buyerTypeInvalido() { return this.tipoCuenta === 'comprador' && this.form.get('buyerType')?.invalid && this.form.get('buyerType')?.touched; }
+  get contactAddressInvalido() { return this.tipoCuenta === 'comprador' && this.form.get('contactAddress')?.invalid && this.form.get('contactAddress')?.touched; }
+  get rucInvalido() { return this.tipoCuenta === 'comprador' && this.form.get('ruc')?.invalid && this.form.get('ruc')?.touched; }
 
   onSubmit() {
     if (this.tipoCuenta === 'agricultor') {
@@ -134,44 +108,34 @@ export class Register {
     this.cargando = true;
     this.error = '';
 
-    const { nombre, email, password, location, mainProducts, buyerType, ruc, contactAddress } = this.form.value;
+    const { nombre, apellido, email, password, location, mainProducts, buyerType, ruc, contactAddress } = this.form.value;
 
-    const extras = this.tipoCuenta === 'agricultor'
+    const payload: RegisterRequest = this.tipoCuenta === 'agricultor'
       ? {
-          status: 'pending' as const,
-          location: location?.trim(),
-          mainProducts: mainProducts?.split(',').map((p: string) => p.trim()).filter(Boolean),
+          nombre, apellido, email, password,
+          rol: 'AGRICULTOR',
+          region: location?.trim(),
+          productoresPrincipales: mainProducts?.trim(),
         }
       : {
-          status: 'active' as const,
-          buyerType: buyerType,
+          nombre, apellido, email, password,
+          rol: 'COMPRADOR',
+          tipoComprador: (buyerType || '').toUpperCase(),
           ruc: ruc?.trim(),
-          contactAddress: contactAddress?.trim(),
+          direccionComercial: contactAddress?.trim(),
         };
 
-    // Registrar usuario
-    const resultado = this.auth.registerWithRole(nombre!, email!, password!, this.tipoCuenta, extras);
-
-    if (resultado.ok) {
-      // === SI ES AGRICULTOR, ENVIAR SOLICITUD COMO EN CONTACT.TS ===
-      if (this.tipoCuenta === 'agricultor') {
-        const telefono = 'No registrado';
-        const ubicacion = location || 'No registrada';
-        const productos = Array.isArray(mainProducts) ? mainProducts.join(', ') : 'No registrados';
-
-        this.auth.enviarSolicitud({
-          nombre: nombre!,
-          correo: email!,
-          telefono: telefono,
-          mensaje: `[Agricultor] Ubicación: ${ubicacion}. Productos: ${productos}.`
-        });
-      }
-
-      this.exito = resultado.mensaje;
-      setTimeout(() => this.router.navigate(['/login']), 1800);
-    } else {
-      this.error = resultado.mensaje;
-      this.cargando = false;
-    }
+    this.auth.register(payload).subscribe({
+      next: () => {
+        this.exito = this.tipoCuenta === 'agricultor'
+          ? 'Solicitud enviada. Un administrador validará tu cuenta.'
+          : 'Cuenta creada exitosamente.';
+        setTimeout(() => this.router.navigate(['/login']), 1800);
+      },
+      error: (err) => {
+        this.cargando = false;
+        this.error = err.error?.error || 'No se pudo completar el registro.';
+      },
+    });
   }
 }

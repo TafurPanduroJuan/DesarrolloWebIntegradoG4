@@ -20,7 +20,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/usuarios")
-@CrossOrigin(origins = "*")
+
 public class UsuarioController {
 
     @Autowired

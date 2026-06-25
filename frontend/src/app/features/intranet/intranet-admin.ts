@@ -1,7 +1,18 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { Auth, Usuario, SolicitudAgricultor, ProductoAgrolink } from '../auth/services/auth';
+import { HttpClient } from '@angular/common/http';
+import { Auth, UsuarioSesion, ProductoAgrolink } from '../auth/services/auth';
+
+export interface UsuarioAdmin {
+  id: number;
+  nombre: string;
+  apellido: string;
+  email: string;
+  rol: string;
+  activo: boolean;
+  estadoValidacion?: string;
+}
 
 @Component({
   selector: 'app-intranet-admin',
@@ -11,26 +22,23 @@ import { Auth, Usuario, SolicitudAgricultor, ProductoAgrolink } from '../auth/se
   styleUrl: './intranet-admin.css',
 })
 export class IntranetAdmin implements OnInit {
-  usuario: Usuario | null = null;
+  usuario: UsuarioSesion | null = null;
   seccionActiva = signal<string>('resumen');
 
-  usuarios: Usuario[] = [];
-  solicitudes: SolicitudAgricultor[] = [];
+  usuarios: UsuarioAdmin[] = [];
   productos: ProductoAgrolink[] = [];
 
-  constructor(private auth: Auth, private router: Router) {}
-  
-  estado(status: string | undefined): string {
-  switch (status) {
-    case 'active': return 'Activo';
-    case 'pending': return 'Pendiente';
-    case 'inactive': return 'Inactivo';
-    default: return 'Activo';
-  }
-  }
+  private readonly API = 'http://localhost:8080/api';
+
+  constructor(
+    private auth: Auth,
+    private router: Router,
+    private http: HttpClient
+  ) {}
+
   ngOnInit() {
     this.usuario = this.auth.getUsuarioActual();
-    if (!this.usuario || this.usuario.rol !== 'admin') {
+    if (!this.usuario || this.usuario.rol !== 'ADMINISTRADOR') {
       this.router.navigate(['/intranet']);
       return;
     }
@@ -38,66 +46,55 @@ export class IntranetAdmin implements OnInit {
   }
 
   cargarDatos() {
-    this.usuarios = this.auth.getUsuarios();
-    this.solicitudes = this.auth.getSolicitudes();
+    this.http.get<UsuarioAdmin[]>(`${this.API}/usuarios`).subscribe({
+      next: (data) => this.usuarios = data,
+      error: () => this.usuarios = []
+    });
     this.productos = this.auth.getProductos();
   }
 
   irA(seccion: string) { this.seccionActiva.set(seccion); }
   cerrarSesion() { this.auth.logout(); }
 
-  // --- SOLICITUDES AGRICULTORES ---
-  get solicitudesPendientes() { return this.solicitudes.filter(s => s.estado === 'pendiente'); }
-  
-  aprobarSolicitud(id: string) {
-    this.auth.actualizarEstadoSolicitud(id, 'aprobado');
-    this.cargarDatos();
-  }
-  
-  observarSolicitud(id: string) {
-    const nota = prompt('Escribe la observación para el agricultor:');
-    if (nota && nota.trim()) {
-      this.auth.gestionarSolicitud(id, 'observar', nota.trim());
-      this.cargarDatos();
-    }
-  }
-  
-  rechazarSolicitud(id: string) {
-    const motivo = prompt('¿Cuál es el motivo del rechazo? (opcional)');
-    const solicitud = this.solicitudes.find(s => s.id === id);
-    
-    if (solicitud) {
-      // Si se rechaza la solicitud, marcar al usuario como inactivo
-      this.auth.marcarUsuarioComoRechazado(solicitud.correo, motivo || 'Solicitud rechazada');
-    }
-    
-    this.auth.actualizarEstadoSolicitud(id, 'rechazado');
-    this.cargarDatos();
+  estado(activo: boolean): string {
+    return activo ? 'Activo' : 'Inactivo';
   }
 
-  // --- PRODUCTOS ---
-  get productosPendientes() { return this.productos.filter(p => p.estado === 'pendiente'); }
+  aprobarAgricultor(id: number) {
+    this.http.patch(`${this.API}/usuarios/${id}/validacion`, {
+      estadoValidacion: 'APROBADO'
+    }).subscribe(() => this.cargarDatos());
+  }
+
+  rechazarAgricultor(id: number) {
+    const motivo = prompt('Motivo del rechazo:');
+    this.http.patch(`${this.API}/usuarios/${id}/validacion`, {
+      estadoValidacion: 'RECHAZADO',
+      motivoObservacion: motivo || 'Sin motivo'
+    }).subscribe(() => this.cargarDatos());
+  }
+
+  toggleUsuario(id: number, activo: boolean) {
+    this.http.patch(`${this.API}/usuarios/${id}/estado`, { activo: !activo })
+      .subscribe(() => this.cargarDatos());
+  }
 
   aprobarProducto(id: string) {
     this.auth.actualizarEstadoProducto(id, 'aprobado');
-    this.cargarDatos();
+    this.productos = this.auth.getProductos();
   }
 
   rechazarProducto(id: string) {
     this.auth.actualizarEstadoProducto(id, 'rechazado');
-    this.cargarDatos();
+    this.productos = this.auth.getProductos();
   }
 
-  // --- USUARIOS ---
-  toggleUsuario(id: string) {
-    this.auth.toggleUsuarioStatus(id);
-    this.cargarDatos(); // Refresca la tabla
+  get solicitudesPendientes() {
+    return this.usuarios.filter(u => u.rol === 'AGRICULTOR' && u.estadoValidacion === 'PENDIENTE');
   }
-
-  // --- KPIs ---
-  get totalAgricultores() { return this.usuarios.filter(u => u.rol === 'agricultor').length; }
-  get totalCompradores() { return this.usuarios.filter(u => u.rol === 'comprador').length; }
-  get ingresosTotales() { return 'S/ 0 (Simulado)'; } // Ventas futuras
+  get productosPendientes() { return this.productos.filter(p => p.estado === 'pendiente'); }
+  get totalAgricultores() { return this.usuarios.filter(u => u.rol === 'AGRICULTOR').length; }
+  get totalCompradores() { return this.usuarios.filter(u => u.rol === 'COMPRADOR').length; }
 
   estadoBadgeClass(estado: string): string {
     const map: Record<string, string> = {

@@ -11,7 +11,7 @@ import com.AgroLink.ProyectoAngular.service.PedidoService;
 
 @RestController
 @RequestMapping("/api/pedidos")
-@CrossOrigin(origins = "*")
+
 public class PedidoController {
 
     private final PedidoService pedidoService;

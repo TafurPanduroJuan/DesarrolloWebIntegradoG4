@@ -11,7 +11,7 @@ import com.AgroLink.ProyectoAngular.service.DatosContactoService;
 
 @RestController
 @RequestMapping("/api/datos-contacto")
-@CrossOrigin(origins = "*")
+
 public class DatosContactoController {
 
     private final DatosContactoService datosContactoService;

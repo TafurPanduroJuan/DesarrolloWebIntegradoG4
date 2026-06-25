@@ -19,10 +19,9 @@ export class IntranetRedirect implements OnInit {
     }
     if (this.auth.isAdmin()) {
       this.router.navigate(['/intranet/admin']);
-    } else if (this.auth.getUsuarioActual()?.rol === 'agricultor') {
+    } else if (this.auth.getUsuarioActual()?.rol === 'AGRICULTOR') {
       this.router.navigate(['/intranet/agricultor']);
     } else {
-      // Si es comprador, no tiene intranet, lo mandamos al inicio
       this.router.navigate(['/']);
     }
   }

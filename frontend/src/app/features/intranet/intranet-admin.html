@@ -55,7 +55,7 @@
       <div class="header-badge-admin">🛡️ Vista Administrador</div>
     </header>
 
-    <!-- ===== SECCIÓN: RESUMEN ADMIN ===== -->
+    <!-- ===== RESUMEN ===== -->
     <section *ngIf="seccionActiva() === 'resumen'" class="content-section">
       <div class="kpi-grid">
         <div class="kpi-card kpi-green">
@@ -75,77 +75,60 @@
         <div class="kpi-card kpi-yellow">
           <div class="kpi-icon">⏳</div>
           <div class="kpi-data">
+            <span class="kpi-value">{{ solicitudesPendientes.length }}</span>
+            <span class="kpi-label">Agricultores por aprobar</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-icon">📦</div>
+          <div class="kpi-data">
             <span class="kpi-value">{{ productosPendientes.length }}</span>
             <span class="kpi-label">Productos por revisar</span>
           </div>
         </div>
-        <div class="kpi-card kpi-purple">
-          <div class="kpi-icon">💰</div>
-          <div class="kpi-data">
-            <span class="kpi-value">{{ ingresosTotales }}</span>
-            <span class="kpi-label">Ingresos totales</span>
-          </div>
-        </div>
       </div>
 
-      <!-- Alertas admin -->
-      <div class="alert-box alert-yellow" *ngIf="productosPendientes.length > 0">
-        <span class="alert-icon">⚠️</span>
-        <span>Tienes <strong>{{ productosPendientes.length }}</strong> producto(s) pendiente(s) de aprobación para publicarse en el catálogo.</span>
-      </div>
       <div class="alert-box alert-blue" *ngIf="solicitudesPendientes.length > 0">
         <span class="alert-icon">👤</span>
-        <span>Tienes <strong>{{ solicitudesPendientes.length }}</strong> solicitud(es) de personas queriendo vender en AgroLink.</span>
+        <span>Tienes <strong>{{ solicitudesPendientes.length }}</strong> agricultor(es) pendiente(s) de aprobación.</span>
       </div>
-
-      <!-- Resumen rápido si no hay nada pendiente -->
-      <div class="alert-box alert-green" *ngIf="productosPendientes.length === 0 && solicitudesPendientes.length === 0">
+      <div class="alert-box alert-green" *ngIf="solicitudesPendientes.length === 0">
         <span class="alert-icon">✅</span>
-        <span>¡Todo al día! No hay peticiones pendientes por revisar.</span>
+        <span>¡Todo al día! No hay solicitudes pendientes.</span>
       </div>
     </section>
 
-    <!-- ===== SECCIÓN: SOLICITUDES AGRICULTORES ===== -->
+    <!-- ===== SOLICITUDES AGRICULTORES ===== -->
     <section *ngIf="seccionActiva() === 'solicitudes'" class="content-section">
       <div class="table-header">
-        <h2>Solicitudes del formulario "Trabaja con nosotros"</h2>
-        <span class="table-count">{{ solicitudes.length }} registros totales</span>
-      </div>
-      
-      <div class="alert-box alert-blue mb-4">
-        <span>Al <strong>Aprobar</strong> a un usuario, su cuenta cambia al rol 'Agricultor' permitiéndole acceder a su intranet para subir productos.</span>
+        <h2>Agricultores pendientes de validación</h2>
+        <span class="table-count">{{ solicitudesPendientes.length }} pendientes</span>
       </div>
 
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Fecha</th>
-              <th>Solicitante</th>
-              <th>Contacto</th>
-              <th>Mensaje</th>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Email</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngIf="solicitudes.length === 0">
-              <td colspan="6" class="text-center py-4 text-muted">No hay solicitudes registradas aún.</td>
+            <tr *ngIf="solicitudesPendientes.length === 0">
+              <td colspan="5" class="text-center py-4 text-muted">No hay solicitudes pendientes.</td>
             </tr>
-            <tr *ngFor="let s of solicitudes">
-              <td>{{ s.fecha }}</td>
+            <tr *ngFor="let u of solicitudesPendientes">
+              <td class="td-id">{{ u.id }}</td>
+              <td class="td-bold">{{ u.nombre }} {{ u.apellido }}</td>
+              <td>{{ u.email }}</td>
+              <td><span class="badge badge-pendiente">PENDIENTE</span></td>
               <td>
-                <div class="td-bold">{{ s.nombre }}</div>
-                <div class="td-sub">{{ s.correo }}</div>
-              </td>
-              <td>{{ s.telefono }}</td>
-              <td style="max-width: 250px; white-space: normal; font-size: 0.8rem;">{{ s.mensaje }}</td>
-              <td><span [class]="'badge ' + estadoBadgeClass(s.estado)">{{ s.estado | uppercase }}</span></td>
-              <td>
-                <div class="d-flex gap-2" *ngIf="s.estado === 'pendiente'">
-                  <button class="btn btn-sm btn-success rounded-pill" (click)="aprobarSolicitud(s.id)">Aprobar</button>
-                  <button class="btn btn-sm btn-warning rounded-pill" (click)="observarSolicitud(s.id)">Observar</button>
-                  <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="rechazarSolicitud(s.id)">Rechazar</button>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-success rounded-pill" (click)="aprobarAgricultor(u.id)">Aprobar</button>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="rechazarAgricultor(u.id)">Rechazar</button>
                 </div>
               </td>
             </tr>
@@ -154,13 +137,12 @@
       </div>
     </section>
 
-    <!-- ===== SECCIÓN: PETICIONES PRODUCTOS ===== -->
+    <!-- ===== PRODUCTOS ===== -->
     <section *ngIf="seccionActiva() === 'productos'" class="content-section">
       <div class="table-header">
         <h2>Productos enviados por agricultores</h2>
-        <span class="table-count">{{ productos.length }} productos subidos</span>
+        <span class="table-count">{{ productos.length }} productos</span>
       </div>
-
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
@@ -176,7 +158,7 @@
           </thead>
           <tbody>
             <tr *ngIf="productos.length === 0">
-              <td colspan="7" class="text-center py-4 text-muted">Aún no se han subido productos.</td>
+              <td colspan="7" class="text-center py-4 text-muted">No hay productos subidos.</td>
             </tr>
             <tr *ngFor="let p of productos">
               <td>{{ p.fecha }}</td>
@@ -200,59 +182,54 @@
       </div>
     </section>
 
-    <!-- ===== SECCIÓN: USUARIOS ===== -->
+    <!-- ===== USUARIOS ===== -->
     <section *ngIf="seccionActiva() === 'usuarios'" class="content-section">
       <div class="table-header">
         <h2>Gestión de Usuarios</h2>
-        <span class="table-count">{{ usuarios.length }} cuentas creadas</span>
+        <span class="table-count">{{ usuarios.length }} cuentas</span>
       </div>
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
               <th>ID</th>
-              <th>Usuario</th>
+              <th>Nombre</th>
               <th>Email</th>
-              <th>Rol Actual</th>
+              <th>Rol</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let u of usuarios">
-              <td class="td-id">{{ u.id.slice(0,8) }}...</td>
-              <td class="td-bold">{{ u.nombre }}</td>
+              <td class="td-id">{{ u.id }}</td>
+              <td class="td-bold">{{ u.nombre }} {{ u.apellido }}</td>
               <td>{{ u.email }}</td>
               <td>
-                <span class="badge" 
+                <span class="badge"
                   [ngClass]="{
-                    'bg-primary': u.rol === 'admin',
-                    'bg-success': u.rol === 'agricultor',
-                    'bg-secondary': u.rol === 'comprador'
+                    'bg-primary': u.rol === 'ADMINISTRADOR',
+                    'bg-success': u.rol === 'AGRICULTOR',
+                    'bg-secondary': u.rol === 'COMPRADOR'
                   }">
-                  {{ u.rol | uppercase }}
+                  {{ u.rol }}
                 </span>
               </td>
               <td>
-                <span class="badge" 
-                  [ngClass]="{
-                    'bg-success': u.status === 'active',
-                    'bg-warning': u.status === 'pending',
-                    'bg-secondary': u.status === 'inactive'
-                  }">
-                  {{ estado(u.status) }}
+                <span class="badge" [ngClass]="{'bg-success': u.activo, 'bg-secondary': !u.activo}">
+                  {{ u.activo ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
               <td>
-                <div class="d-flex gap-2" *ngIf="u.rol !== 'admin'">
-                  <button class="btn btn-sm btn-outline-success" 
-                          [disabled]="u.status === 'active'"
-                          (click)="toggleUsuario(u.id)">
+                <div class="d-flex gap-2" *ngIf="u.rol !== 'ADMINISTRADOR'">
+                  <button class="btn btn-sm btn-outline-success"
+                          [disabled]="u.activo"
+                          (click)="toggleUsuario(u.id, u.activo)">
                     Activar
                   </button>
-                  <button class="btn btn-sm btn-outline-warning" 
-                          [disabled]="u.status === 'inactive'"
-                          (click)="toggleUsuario(u.id)">
+                  <button class="btn btn-sm btn-outline-warning"
+                          [disabled]="!u.activo"
+                          (click)="toggleUsuario(u.id, u.activo)">
                     Desactivar
                   </button>
                 </div>

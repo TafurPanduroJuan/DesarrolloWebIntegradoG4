@@ -11,7 +11,7 @@ import com.AgroLink.ProyectoAngular.service.MovimientoStockService;
 
 @RestController
 @RequestMapping("/api/movimientos-stock")
-@CrossOrigin(origins = "*")
+
 public class MovimientoStockController {
 
     private final MovimientoStockService movimientoStockService;

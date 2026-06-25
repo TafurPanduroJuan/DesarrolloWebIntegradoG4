@@ -11,7 +11,7 @@ import com.AgroLink.ProyectoAngular.service.LoteService;
 
 @RestController
 @RequestMapping("/api/lotes")
-@CrossOrigin(origins = "*")
+
 public class LoteController {
 
     private final LoteService loteService;

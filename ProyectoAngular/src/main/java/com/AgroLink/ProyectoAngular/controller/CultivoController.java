@@ -20,7 +20,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/cultivos")
-@CrossOrigin(origins = "*")
+
 public class CultivoController {
 
     @Autowired
