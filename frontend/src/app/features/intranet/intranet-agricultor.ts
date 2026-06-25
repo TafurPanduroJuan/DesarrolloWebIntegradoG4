@@ -94,7 +94,10 @@ export class IntranetAgricultor implements OnInit {
   cargarDatos() {
     if (this.usuario) {
       this.misProductos = this.auth.getProductosPorAgricultor(String(this.usuario.id));
-      this.misCultivos = this.cultivos.getCultivosPorAgricultor(String(this.usuario.id));
+      this.cultivos.getCultivosPorAgricultor(String(this.usuario.id)).subscribe({
+        next: (data) => this.misCultivos = data,
+        error: () => this.misCultivos = []
+      });
     }
   }
 
@@ -136,15 +139,19 @@ export class IntranetAgricultor implements OnInit {
   // CULTIVOS — RF02: Registrar cultivo
   // ──────────────────────────────────────────
   guardarCultivo() {
-    this.cultivos.guardarCultivo({ ...this.formCultivo });
-    this.formCultivo = {
-      producto: '', variedad: '', fechaSiembra: '', etapaActual: 'sembrado',
-      nombreLote: '', area: 0, ubicacion: '', estadoLote: 'activo',
-    };
-    this.mensajeExitoCultivo = '¡Cultivo registrado exitosamente!';
-    setTimeout(() => this.mensajeExitoCultivo = '', 5000);
-    this.cargarDatos();
-    this.irA('cultivos');
+    this.cultivos.guardarCultivo({ ...this.formCultivo }).subscribe({
+      next: () => {
+        this.formCultivo = {
+          producto: '', variedad: '', fechaSiembra: '', etapaActual: 'sembrado',
+          nombreLote: '', area: 0, ubicacion: '', estadoLote: 'activo',
+        };
+        this.mensajeExitoCultivo = '¡Cultivo registrado exitosamente!';
+        setTimeout(() => this.mensajeExitoCultivo = '', 5000);
+        this.cargarDatos();
+        this.irA('cultivos');
+      },
+      error: () => this.mensajeExitoCultivo = 'Error al registrar cultivo.'
+    });
   }
 
   // ──────────────────────────────────────────
@@ -163,12 +170,15 @@ export class IntranetAgricultor implements OnInit {
 
   guardarLote() {
     if (!this.cultivoSeleccionado) return;
-    this.cultivos.actualizarLoteCultivo(this.cultivoSeleccionado.id, { ...this.formLote });
-    this.mensajeExitoLote = '¡Lote actualizado correctamente!';
-    setTimeout(() => this.mensajeExitoLote = '', 4000);
-    this.cargarDatos();
-    // Actualizar referencia local
-    this.cultivoSeleccionado = this.misCultivos.find(c => c.id === this.cultivoSeleccionado!.id) || null;
+    this.cultivos.actualizarLoteCultivo(this.cultivoSeleccionado.id, { ...this.formLote }).subscribe({
+      next: () => {
+        this.mensajeExitoLote = '¡Lote actualizado correctamente!';
+        setTimeout(() => this.mensajeExitoLote = '', 4000);
+        this.cargarDatos();
+        this.cultivoSeleccionado = this.misCultivos.find(c => c.id === this.cultivoSeleccionado!.id) || null;
+      },
+      error: () => this.mensajeExitoLote = 'Error al actualizar lote.'
+    });
   }
 
   // ──────────────────────────────────────────
@@ -186,12 +196,16 @@ export class IntranetAgricultor implements OnInit {
 
   guardarSeguimiento() {
     if (!this.cultivoSeleccionado) return;
-    this.cultivos.agregarSeguimiento(this.cultivoSeleccionado.id, { ...this.formSeguimiento });
-    this.formSeguimiento = { etapa: this.formSeguimiento.etapa, observacion: '', fecha: new Date().toISOString().split('T')[0] };
-    this.mensajeExitoSeguimiento = '¡Seguimiento registrado!';
-    setTimeout(() => this.mensajeExitoSeguimiento = '', 4000);
-    this.cargarDatos();
-    this.cultivoSeleccionado = this.misCultivos.find(c => c.id === this.cultivoSeleccionado!.id) || null;
+    this.cultivos.agregarSeguimiento(this.cultivoSeleccionado.id, { ...this.formSeguimiento }).subscribe({
+      next: () => {
+        this.formSeguimiento = { etapa: this.formSeguimiento.etapa, observacion: '', fecha: new Date().toISOString().split('T')[0] };
+        this.mensajeExitoSeguimiento = '¡Seguimiento registrado!';
+        setTimeout(() => this.mensajeExitoSeguimiento = '', 4000);
+        this.cargarDatos();
+        this.cultivoSeleccionado = this.misCultivos.find(c => c.id === this.cultivoSeleccionado!.id) || null;
+      },
+      error: () => this.mensajeExitoSeguimiento = 'Error al registrar seguimiento.'
+    });
   }
 
   // ──────────────────────────────────────────
@@ -209,12 +223,16 @@ export class IntranetAgricultor implements OnInit {
 
   guardarEvento() {
     if (!this.cultivoSeleccionado) return;
-    this.cultivos.agregarEvento(this.cultivoSeleccionado.id, { ...this.formEvento });
-    this.formEvento = { tipo: this.formEvento.tipo, observacion: '', fecha: new Date().toISOString().split('T')[0] };
-    this.mensajeExitoEvento = '¡Evento registrado!';
-    setTimeout(() => this.mensajeExitoEvento = '', 4000);
-    this.cargarDatos();
-    this.cultivoSeleccionado = this.misCultivos.find(c => c.id === this.cultivoSeleccionado!.id) || null;
+    this.cultivos.agregarEvento(this.cultivoSeleccionado.id, { ...this.formEvento }).subscribe({
+      next: () => {
+        this.formEvento = { tipo: this.formEvento.tipo, observacion: '', fecha: new Date().toISOString().split('T')[0] };
+        this.mensajeExitoEvento = '¡Evento registrado!';
+        setTimeout(() => this.mensajeExitoEvento = '', 4000);
+        this.cargarDatos();
+        this.cultivoSeleccionado = this.misCultivos.find(c => c.id === this.cultivoSeleccionado!.id) || null;
+      },
+      error: () => this.mensajeExitoEvento = 'Error al registrar evento.'
+    });
   }
 
   cerrarPanel() {
