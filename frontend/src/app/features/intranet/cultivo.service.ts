@@ -2,63 +2,84 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export type EstadoLote   = 'activo' | 'en_descanso' | 'en_preparacion' | 'inactivo';
-export type EtapaCultivo = 'sembrado' | 'crecimiento' | 'cosecha' | 'finalizado';
-export type TipoEvento   = 'siembra' | 'fertilizacion' | 'riego' | 'control_plagas' | 'cosecha' | 'perdida_parcial';
+export type EstadoCultivo = 'SEMBRADO' | 'CRECIMIENTO' | 'COSECHA' | 'FINALIZADO' | 'PERDIDA';
+export type TipoEvento = 'SIEMBRA' | 'FERTILIZACION' | 'RIEGO' | 'CONTROL_PLAGAS' | 'COSECHA' | 'PERDIDA_PARCIAL';
 
-export interface SeguimientoEntry {
-  id: string;
-  etapa: EtapaCultivo;
-  observacion: string;
+export interface Cultivo {
+  id: number;
+  agricultorId: number;
+  nombreProducto: string;
+  variedad: string;
+  categoria: string;
+  nombreLote: string;
+  areaHa: number;
+  ubicacion: string;
+  descripcion: string;
+  fechaSiembra: string;
+  fechaCosechaEstimada: string;
+  estado: EstadoCultivo;
+  etapaProductiva: string;
+  observacionSeguimiento: string;
+  fechaUltimoSeguimiento: string;
+  fechaCreacion: string;
+}
+
+export interface SeguimientoRequest {
+  estado: EstadoCultivo;
+  etapaProductiva?: string;
+  observacion?: string;
+}
+
+export interface EventoProduccionRequest {
+  tipo: TipoEvento;
+  descripcion: string;
   fecha: string;
+  cultivoId: number;
 }
 
 export interface EventoProduccion {
-  id: string;
+  id: number;
   tipo: TipoEvento;
-  observacion: string;
+  descripcion: string;
   fecha: string;
-}
-
-export interface Cultivo {
-  id: string;
-  agricultorId: string;
-  producto: string;
-  variedad: string;
-  nombreLote: string;
-  area: number;
-  ubicacion: string;
-  fechaSiembra: string;
-  estadoLote: EstadoLote;
-  etapaActual: EtapaCultivo;
-  seguimiento: SeguimientoEntry[];
-  eventos: EventoProduccion[];
-  fechaCreacion: string;
+  cultivoId: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class CultivoService {
-  private readonly API = 'http://localhost:8080/api/cultivos';
+  private readonly API = 'http://localhost:8080/api';
 
   constructor(private http: HttpClient) {}
 
-  getCultivosPorAgricultor(agricultorId: string): Observable<Cultivo[]> {
-    return this.http.get<Cultivo[]>(`${this.API}/agricultor/${agricultorId}`);
+  getMisCultivos(): Observable<Cultivo[]> {
+    return this.http.get<Cultivo[]>(`${this.API}/cultivos/mis-cultivos`);
   }
 
-  guardarCultivo(datos: Omit<Cultivo, 'id' | 'agricultorId' | 'fechaCreacion' | 'seguimiento' | 'eventos'>): Observable<Cultivo> {
-    return this.http.post<Cultivo>(this.API, datos);
+  getCultivosPorAgricultor(agricultorId: number): Observable<Cultivo[]> {
+    return this.http.get<Cultivo[]>(`${this.API}/cultivos/agricultor/${agricultorId}`);
   }
 
-  actualizarLoteCultivo(cultivoId: string, lote: Pick<Cultivo, 'nombreLote' | 'area' | 'ubicacion' | 'estadoLote'>): Observable<Cultivo> {
-    return this.http.put<Cultivo>(`${this.API}/${cultivoId}`, lote);
+  guardarCultivo(datos: Partial<Cultivo>): Observable<Cultivo> {
+    return this.http.post<Cultivo>(`${this.API}/cultivos`, datos);
   }
 
-  agregarSeguimiento(cultivoId: string, entry: Omit<SeguimientoEntry, 'id'>): Observable<Cultivo> {
-    return this.http.patch<Cultivo>(`${this.API}/${cultivoId}/seguimiento`, entry);
+  actualizarCultivo(cultivoId: number, datos: Partial<Cultivo>): Observable<Cultivo> {
+    return this.http.put<Cultivo>(`${this.API}/cultivos/${cultivoId}`, datos);
   }
 
-  agregarEvento(cultivoId: string, evento: Omit<EventoProduccion, 'id'>): Observable<Cultivo> {
-    return this.http.patch<Cultivo>(`${this.API}/${cultivoId}/seguimiento`, evento);
+  actualizarSeguimiento(cultivoId: number, req: SeguimientoRequest): Observable<Cultivo> {
+    return this.http.patch<Cultivo>(`${this.API}/cultivos/${cultivoId}/seguimiento`, req);
+  }
+
+  agregarEvento(req: EventoProduccionRequest): Observable<EventoProduccion> {
+    return this.http.post<EventoProduccion>(`${this.API}/eventos-produccion`, req);
+  }
+
+  getEventosPorCultivo(cultivoId: number): Observable<EventoProduccion[]> {
+    return this.http.get<EventoProduccion[]>(`${this.API}/eventos-produccion/cultivo/${cultivoId}`);
+  }
+
+  eliminarCultivo(cultivoId: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/cultivos/${cultivoId}`);
   }
 }
