@@ -1,4 +1,4 @@
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -107,7 +107,7 @@ export class Auth {
     return this.getUsuarioActual()?.rol === rol;
   }
 
-  // Productos siguen en mock por ahora (no hay backend para esto aÃºn)
+  // Productos siguen en mock por ahora (no hay backend para esto aÃƒÂºn)
   getProductos(): ProductoAgrolink[] {
     return JSON.parse(localStorage.getItem(this.PRODUCTOS_KEY) || '[]');
   }
