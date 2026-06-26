@@ -3,7 +3,7 @@ package com.AgroLink.ProyectoAngular.model;
 import com.AgroLink.ProyectoAngular.model.enums.TipoEventoEnum;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "evento_produccion")
@@ -29,9 +29,8 @@ public class EventoProduccion {
     private Double impactoEstimadoPct;
 
     @Column(name = "fecha")
-    private LocalDateTime fecha = LocalDateTime.now();
+    private LocalDate fecha = LocalDate.now();
 
-    // ---------- Getters & Setters ----------
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -45,8 +44,8 @@ public class EventoProduccion {
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
     public Double getImpactoEstimadoPct() { return impactoEstimadoPct; }
-    public void setImpactoEstimadoPct(Double impactoEstimadoPct) { this.impactoEstimadoPct = impactoEstimadoPct; }
+    public void setImpactoEstimadoPct(Double v) { this.impactoEstimadoPct = v; }
 
-    public LocalDateTime getFecha() { return fecha; }
-    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
+    public LocalDate getFecha() { return fecha; }
+    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
 }
