@@ -45,16 +45,27 @@
                         </small>
                         </div>
 
-                            <!-- Nombre -->
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold small text-dark" for="nombre">
-                                    <i class="bi bi-person me-1 text-success"></i>Nombre completo
-                                </label>
-                                <input id="nombre" type="text" class="form-control rounded-3"
-                                    [class.is-invalid]="nombreInvalido" formControlName="nombre"
-                                    placeholder="Tu nombre y apellido" />
-                                <div class="invalid-feedback" *ngIf="nombreInvalido">
-                                    El nombre debe tener al menos 2 caracteres.
+                            <!-- Nombre y Apellido -->
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label fw-semibold small text-dark" for="nombre">
+                                        <i class="bi bi-person me-1 text-success"></i>Nombres
+                                    </label>
+                                    <input id="nombre" type="text" class="form-control rounded-3" [class.is-invalid]="nombreInvalido"
+                                        formControlName="nombre" placeholder="Tus nombres" />
+                                    <div class="invalid-feedback" *ngIf="nombreInvalido">
+                                        Mínimo 2 caracteres.
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label fw-semibold small text-dark" for="apellido">
+                                        <i class="bi bi-person me-1 text-success"></i>Apellidos
+                                    </label>
+                                    <input id="apellido" type="text" class="form-control rounded-3" [class.is-invalid]="apellidoInvalido"
+                                        formControlName="apellido" placeholder="Tus apellidos" />
+                                    <div class="invalid-feedback" *ngIf="apellidoInvalido">
+                                        Mínimo 2 caracteres.
+                                    </div>
                                 </div>
                             </div>
 
