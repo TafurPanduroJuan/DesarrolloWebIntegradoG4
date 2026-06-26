@@ -1,0 +1,6 @@
+
+# Archivos de debug/pruebas locales
+*.sql
+login.json
+register.json
+reset.sql
