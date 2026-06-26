@@ -10,14 +10,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * RF02  - Registro de cultivos
- * RF03  - Seguimiento de producción (estado, etapa, observación)
- * RF16  - Gestión de lotes agrícolas vinculados al cultivo
- * RF17  - Gestión de eventos de producción
+ * RF03  - Seguimiento de producciÃƒÂ³n (estado, etapa, observaciÃƒÂ³n)
+ * RF16  - GestiÃƒÂ³n de lotes agrÃƒÂ­colas vinculados al cultivo
+ * RF17  - GestiÃƒÂ³n de eventos de producciÃƒÂ³n
  */
 @Service
 public class CultivoService {
@@ -46,7 +47,7 @@ public class CultivoService {
         return cultivoRepository.save(datos);
     }
 
-    // ---- RF03: Seguimiento de producción ----
+    // ---- RF03: Seguimiento de producciÃƒÂ³n ----
     @Transactional
     public Cultivo actualizarSeguimiento(Long id, SeguimientoRequest req) {
         Cultivo cultivo = cultivoRepository.findById(id)
@@ -78,13 +79,13 @@ public class CultivoService {
         cultivoRepository.deleteById(id);
     }
 
-    // ---- RF17: Eventos de producción ----
+    // ---- RF17: Eventos de producciÃƒÂ³n ----
     @Transactional
     public EventoProduccion registrarEvento(EventoProduccion evento) {
         // validar que existe el cultivo
         cultivoRepository.findById(evento.getCultivoId())
                 .orElseThrow(() -> new IllegalArgumentException("Cultivo no encontrado: " + evento.getCultivoId()));
-        if (evento.getFecha() == null) evento.setFecha(LocalDateTime.now());
+        if (evento.getFecha() == null) evento.setFecha(LocalDate.now());
         return eventoProduccionRepository.save(evento);
     }
 
