@@ -53,7 +53,7 @@ export interface ProductoAgrolink {
   providedIn: 'root',
 })
 export class Auth {
-  private readonly API_URL = `/auth`;
+  private readonly API_URL = `${environment.apiUrl}/auth`;
   private readonly TOKEN_KEY = 'agrolink_token';
   private readonly SESSION_KEY = 'agrolink_sesion';
   private readonly PRODUCTOS_KEY = 'agrolink_productos';
@@ -107,7 +107,7 @@ export class Auth {
     return this.getUsuarioActual()?.rol === rol;
   }
 
-  // Productos siguen en mock por ahora (no hay backend para esto aÃƒÂºn)
+  // Productos siguen en mock por ahora (no hay backend para esto aÃƒÆ’Ã‚Âºn)
   getProductos(): ProductoAgrolink[] {
     return JSON.parse(localStorage.getItem(this.PRODUCTOS_KEY) || '[]');
   }
