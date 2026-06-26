@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -52,7 +53,7 @@ export interface ProductoAgrolink {
   providedIn: 'root',
 })
 export class Auth {
-  private readonly API_URL = 'http://localhost:8080/api/auth';
+  private readonly API_URL = `/auth`;
   private readonly TOKEN_KEY = 'agrolink_token';
   private readonly SESSION_KEY = 'agrolink_sesion';
   private readonly PRODUCTOS_KEY = 'agrolink_productos';
@@ -106,7 +107,7 @@ export class Auth {
     return this.getUsuarioActual()?.rol === rol;
   }
 
-  // Productos siguen en mock por ahora (no hay backend para esto aún)
+  // Productos siguen en mock por ahora (no hay backend para esto aÃºn)
   getProductos(): ProductoAgrolink[] {
     return JSON.parse(localStorage.getItem(this.PRODUCTOS_KEY) || '[]');
   }
