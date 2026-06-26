@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -10,7 +11,7 @@ export interface Cultivo {
   agricultorId: number;
   nombreProducto: string;
   variedad: string;
-  categoria: string;
+  categoria?: string | null;
   nombreLote: string;
   areaHa: number;
   ubicacion: string;
@@ -47,7 +48,7 @@ export interface EventoProduccion {
 
 @Injectable({ providedIn: 'root' })
 export class CultivoService {
-  private readonly API = 'http://localhost:8080/api';
+  private readonly API = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 

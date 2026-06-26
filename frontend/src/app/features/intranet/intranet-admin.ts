@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -28,7 +29,7 @@ export class IntranetAdmin implements OnInit {
   usuarios: UsuarioAdmin[] = [];
   productos: ProductoAgrolink[] = [];
 
-  private readonly API = 'http://localhost:8080/api';
+  private readonly API = environment.apiUrl;
 
   constructor(
     private auth: Auth,
