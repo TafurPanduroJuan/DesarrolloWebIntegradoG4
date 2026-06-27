@@ -31,6 +31,12 @@
       <button class="nav-item" [class.active]="seccionActiva() === 'subir'" (click)="irA('subir')">
         <span class="nav-icon">📦</span> Subir Producto
       </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'lotes'" (click)="irA('lotes')">
+        <span class="nav-icon">🏷️</span> Mis Lotes
+      </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'nuevo-lote'" (click)="irA('nuevo-lote')">
+        <span class="nav-icon">📤</span> Publicar Lote
+      </button>
       <button class="nav-item" [class.active]="seccionActiva() === 'perfil'" (click)="irA('perfil')">
         <span class="nav-icon">👤</span> Mi Perfil
       </button>
@@ -49,6 +55,7 @@
   <!-- ===== MAIN CONTENT ===== -->
   <main class="intranet-main">
 
+    <!-- HEADER -->
     <header class="intranet-header">
       <div class="header-title">
         <h1 *ngIf="seccionActiva() === 'resumen'">📊 Mi Resumen</h1>
@@ -56,13 +63,17 @@
         <h1 *ngIf="seccionActiva() === 'nuevo-cultivo'">➕ Nuevo Cultivo</h1>
         <h1 *ngIf="seccionActiva() === 'productos'">🌱 Mis Productos</h1>
         <h1 *ngIf="seccionActiva() === 'subir'">📦 Subir Nuevo Producto</h1>
+        <h1 *ngIf="seccionActiva() === 'lotes'">🏷️ Mis Lotes Comerciales</h1>
+        <h1 *ngIf="seccionActiva() === 'nuevo-lote'">📤 Publicar Nuevo Lote</h1>
         <h1 *ngIf="seccionActiva() === 'perfil'">👤 Mi Perfil</h1>
       </div>
       <div class="header-date">{{ usuario.email }}</div>
     </header>
 
-    <!-- ===== RESUMEN ===== -->
+    <!-- ===== SECCIÓN: RESUMEN ===== -->
     <section *ngIf="seccionActiva() === 'resumen'" class="content-section">
+
+      <!-- KPIs -->
       <div class="kpi-grid">
         <div class="kpi-card kpi-green">
           <div class="kpi-icon">🌾</div>
@@ -75,7 +86,7 @@
           <div class="kpi-icon">✅</div>
           <div class="kpi-data">
             <span class="kpi-value">{{ cultivosActivos }}</span>
-            <span class="kpi-label">Cultivos activos</span>
+            <span class="kpi-label">Lotes activos</span>
           </div>
         </div>
         <div class="kpi-card kpi-yellow">
@@ -94,15 +105,16 @@
         </div>
       </div>
 
+      <!-- Alertas rápidas -->
       <div class="alert-box alert-yellow" *ngIf="productosPendientes > 0">
         <span class="alert-icon">📋</span>
-        <span>Tienes <strong>{{ productosPendientes }}</strong> producto(s) siendo evaluados.</span>
+        <span>Tienes <strong>{{ productosPendientes }}</strong> producto(s) siendo evaluados por el administrador.</span>
       </div>
 
+      <!-- Cultivos recientes -->
       <h2 class="section-subtitle">Tus cultivos recientes</h2>
       <div class="cards-grid">
-        <div *ngIf="misCultivos.length === 0" class="text-muted small">
-          No has registrado ningún cultivo todavía.
+        <div *ngIf="misCultivos.length === 0" class="text-muted small">No has registrado ningún cultivo todavía.
           <button class="btn-link-inline" (click)="irA('nuevo-cultivo')">Registrar ahora →</button>
         </div>
         <div class="harvest-card" *ngFor="let c of misCultivos.slice(0,4)">
@@ -115,6 +127,7 @@
         </div>
       </div>
 
+      <!-- Productos recientes -->
       <h2 class="section-subtitle" style="margin-top:24px;">Tus productos</h2>
       <div class="cards-grid">
         <div *ngIf="misProductos.length === 0" class="text-muted small">No has subido ningún producto todavía.</div>
@@ -129,9 +142,10 @@
       </div>
     </section>
 
-    <!-- ===== MIS CULTIVOS ===== -->
+    <!-- ===== SECCIÓN: MIS CULTIVOS ===== -->
     <section *ngIf="seccionActiva() === 'cultivos'" class="content-section cultivos-section">
 
+      <!-- Panel lateral de detalle (seguimiento / eventos / editar lote) -->
       <div class="panel-overlay" *ngIf="panelActivo" (click)="cerrarPanel()"></div>
       <div class="panel-lateral" [class.panel-abierto]="panelActivo">
 
@@ -154,15 +168,21 @@
             </div>
             <div class="form-group">
               <label class="form-label">Área (ha)</label>
-              <input type="number" class="form-input" name="areaHa" [(ngModel)]="formLote.areaHa" required min="0.01" step="0.01">
+              <input type="number" class="form-input" name="areaHa" [(ngModel)]="formLote.areaHa" required min="0.01" step="0.01" placeholder="Ej: 2.5">
             </div>
             <div class="form-group">
               <label class="form-label">Ubicación</label>
-              <input type="text" class="form-input" name="ubicacion" [(ngModel)]="formLote.ubicacion" required placeholder="Ej: Cajamarca">
+              <input type="text" class="form-input" name="ubicacion" [(ngModel)]="formLote.ubicacion" required placeholder="Ej: Cajamarca, sector Los Alisos">
             </div>
             <div class="form-group">
-              <label class="form-label">Descripción</label>
-              <textarea class="form-input" name="descripcion" [(ngModel)]="formLote.descripcion" rows="2"></textarea>
+              <label class="form-label">Estado productivo</label>
+              <select class="form-input" name="estadoCultivoLote" [(ngModel)]="formLote.estado" required>
+                <option value="SEMBRADO">Sembrado</option>
+                <option value="CRECIMIENTO">Crecimiento</option>
+                <option value="COSECHA">Cosecha</option>
+                <option value="FINALIZADO">Finalizado</option>
+                <option value="PERDIDA">Pérdida</option>
+              </select>
             </div>
             <button type="submit" class="btn-primary w-100" [disabled]="!formLoteRef.valid">Guardar cambios</button>
           </form>
@@ -176,44 +196,40 @@
           </div>
           <p class="panel-subtitle">Cultivo: <strong>{{ cultivoSeleccionado.nombreProducto }}</strong> · {{ cultivoSeleccionado.variedad }}</p>
 
+          <!-- Formulario nueva entrada -->
           <div class="alert-box alert-success mb-3" *ngIf="mensajeExitoSeguimiento">
             <span>✅ {{ mensajeExitoSeguimiento }}</span>
           </div>
-
           <form (ngSubmit)="guardarSeguimiento()" #formSegRef="ngForm" class="panel-form">
             <div class="form-group">
-              <label class="form-label">Estado</label>
-              <select class="form-input" name="estado" [(ngModel)]="formSeguimiento.estado" required>
+              <label class="form-label">Etapa productiva</label>
+              <select class="form-input" name="etapa" [(ngModel)]="formSeguimiento.estado" required>
                 <option value="SEMBRADO">Sembrado</option>
                 <option value="CRECIMIENTO">Crecimiento</option>
                 <option value="COSECHA">Cosecha</option>
                 <option value="FINALIZADO">Finalizado</option>
-                <option value="PERDIDA">Pérdida</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Etapa productiva</label>
-              <input type="text" class="form-input" name="etapaProductiva" [(ngModel)]="formSeguimiento.etapaProductiva" placeholder="Ej: Floración">
-            </div>
-            <div class="form-group">
               <label class="form-label">Observación</label>
-              <textarea class="form-input" name="observacion" [(ngModel)]="formSeguimiento.observacion" rows="3" placeholder="Describe el estado del cultivo..."></textarea>
+              <textarea class="form-input" name="observacion" [(ngModel)]="formSeguimiento.observacion" rows="3" required placeholder="Describe el estado del cultivo..."></textarea>
             </div>
             <button type="submit" class="btn-primary w-100" [disabled]="!formSegRef.valid">Registrar seguimiento</button>
           </form>
 
-          <h4 class="panel-section-title">Último seguimiento</h4>
-          <div class="timeline" *ngIf="cultivoSeleccionado.observacionSeguimiento">
+          <!-- Historial -->
+          <h4 class="panel-section-title">Historial de etapas</h4>
+          
+          <div class="timeline">
             <div class="timeline-item">
               <div class="timeline-dot" [class]="estadoCultivoBadgeClass(cultivoSeleccionado.estado)"></div>
               <div class="timeline-content">
                 <span class="timeline-etapa">{{ estadoCultivoLabel(cultivoSeleccionado.estado) }}</span>
-                <span class="timeline-fecha">{{ cultivoSeleccionado.fechaUltimoSeguimiento }}</span>
-                <p class="timeline-obs">{{ cultivoSeleccionado.observacionSeguimiento }}</p>
+                <span class="timeline-fecha">Último seguimiento: {{ cultivoSeleccionado.fechaUltimoSeguimiento || 'Sin registros' }}</span>
+                <p class="timeline-obs">{{ cultivoSeleccionado.observacionSeguimiento || 'Sin observaciones' }}</p>
               </div>
             </div>
           </div>
-          <div *ngIf="!cultivoSeleccionado.observacionSeguimiento" class="empty-state-small">Sin registros aún.</div>
         </ng-container>
 
         <!-- EVENTOS (RF17) -->
@@ -227,17 +243,16 @@
           <div class="alert-box alert-success mb-3" *ngIf="mensajeExitoEvento">
             <span>✅ {{ mensajeExitoEvento }}</span>
           </div>
-
           <form (ngSubmit)="guardarEvento()" #formEvRef="ngForm" class="panel-form">
             <div class="form-group">
               <label class="form-label">Tipo de evento</label>
               <select class="form-input" name="tipo" [(ngModel)]="formEvento.tipo" required>
-                <option value="SIEMBRA">🌱 Siembra</option>
-                <option value="FERTILIZACION">🧪 Fertilización</option>
-                <option value="RIEGO">💧 Riego</option>
-                <option value="CONTROL_PLAGAS">🐛 Control de Plagas</option>
+                <option value="siembra">🌱 Siembra</option>
+                <option value="fertilizacion">🧪 Fertilización</option>
+                <option value="riego">💧 Riego</option>
+                <option value="control_plagas">🐛 Control de Plagas</option>
                 <option value="COSECHA">🌾 Cosecha</option>
-                <option value="PERDIDA_PARCIAL">⚠️ Pérdida Parcial</option>
+                <option value="perdida_parcial">⚠️ Pérdida Parcial</option>
               </select>
             </div>
             <div class="form-group">
@@ -245,20 +260,33 @@
               <input type="date" class="form-input" name="fecha" [(ngModel)]="formEvento.fecha" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Descripción</label>
+              <label class="form-label">Observación</label>
               <textarea class="form-input" name="descripcion" [(ngModel)]="formEvento.descripcion" rows="3" required placeholder="Describe lo ocurrido..."></textarea>
             </div>
             <button type="submit" class="btn-primary w-100" [disabled]="!formEvRef.valid">Registrar evento</button>
           </form>
+
+          <!-- Historial eventos -->
+          <h4 class="panel-section-title">Historial de eventos</h4>
+          <div *ngIf="eventosCultivo.length === 0" class="empty-state-small">Sin eventos registrados.</div>
+          <div class="eventos-list">
+            <div class="evento-item" *ngFor="let e of eventosCultivo">
+              <div class="evento-tipo">{{ tipoEventoLabel(e.tipo) }}</div>
+              <div class="evento-fecha">{{ e.fecha }}</div>
+              <div class="evento-obs">{{ e.descripcion }}</div>
+            </div>
+          </div>
         </ng-container>
 
-      </div>
+      </div><!-- fin panel-lateral -->
 
+      <!-- Mensaje éxito cultivo guardado -->
       <div class="alert-box alert-success mb-4" *ngIf="mensajeExitoCultivo">
         <span class="alert-icon">✅</span>
         <span>{{ mensajeExitoCultivo }}</span>
       </div>
 
+      <!-- Cabecera tabla -->
       <div class="table-header">
         <h2>Registro de Cultivos</h2>
         <div class="table-header-actions">
@@ -267,6 +295,7 @@
         </div>
       </div>
 
+      <!-- Tabla cultivos -->
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
@@ -277,13 +306,14 @@
               <th>Área (ha)</th>
               <th>Ubicación</th>
               <th>Siembra</th>
-              <th>Estado</th>
+              <th>Etapa</th>
+              <th>Estado Lote</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngIf="misCultivos.length === 0">
-              <td colspan="8" class="text-center py-4 text-muted">
+              <td colspan="9" class="text-center py-4 text-muted">
                 No has registrado cultivos aún.
                 <button class="btn-link-inline" (click)="irA('nuevo-cultivo')">Registrar ahora →</button>
               </td>
@@ -295,6 +325,7 @@
               <td>{{ c.areaHa }}</td>
               <td>{{ c.ubicacion }}</td>
               <td>{{ c.fechaSiembra }}</td>
+              <td><span [class]="'badge ' + estadoCultivoBadgeClass(c.estado)">{{ estadoCultivoLabel(c.estado) }}</span></td>
               <td><span [class]="'badge ' + estadoCultivoBadgeClass(c.estado)">{{ estadoCultivoLabel(c.estado) }}</span></td>
               <td>
                 <div class="acciones-btns">
@@ -309,10 +340,11 @@
       </div>
     </section>
 
-    <!-- ===== NUEVO CULTIVO ===== -->
+    <!-- ===== SECCIÓN: NUEVO CULTIVO (RF02 + RF16) ===== -->
     <section *ngIf="seccionActiva() === 'nuevo-cultivo'" class="content-section">
       <div class="form-card mx-auto">
 
+        <!-- Indicador de pasos -->
         <div class="pasos-indicador">
           <div class="paso-item paso-activo">
             <div class="paso-num">1</div>
@@ -327,8 +359,10 @@
 
         <form (ngSubmit)="guardarCultivo()" #formCultivoRef="ngForm">
 
+          <!-- BLOQUE 1: Cultivo -->
           <div class="form-bloque">
             <h4 class="form-bloque-title">🌱 Información del Cultivo</h4>
+
             <div class="form-row-2">
               <div class="form-group">
                 <label class="form-label">Producto <span class="req">*</span></label>
@@ -359,8 +393,8 @@
                 <input type="date" class="form-input" name="fechaSiembra" [(ngModel)]="formCultivo.fechaSiembra" required>
               </div>
               <div class="form-group">
-                <label class="form-label">Estado inicial <span class="req">*</span></label>
-                <select class="form-input" name="estado" [(ngModel)]="formCultivo.estado" required>
+                <label class="form-label">Etapa inicial <span class="req">*</span></label>
+                <select class="form-input" name="estadoCultivo" [(ngModel)]="formCultivo.estado" required>
                   <option value="SEMBRADO">Sembrado</option>
                   <option value="CRECIMIENTO">Crecimiento</option>
                   <option value="COSECHA">Cosecha</option>
@@ -368,15 +402,12 @@
                 </select>
               </div>
             </div>
-
-            <div class="form-group">
-              <label class="form-label">Etapa productiva</label>
-              <input type="text" class="form-input" name="etapaProductiva" [(ngModel)]="formCultivo.etapaProductiva" placeholder="Ej: Germinación, Floración">
-            </div>
           </div>
 
+          <!-- BLOQUE 2: Lote -->
           <div class="form-bloque">
             <h4 class="form-bloque-title">🗺️ Información del Lote</h4>
+
             <div class="form-row-2">
               <div class="form-group">
                 <label class="form-label">Nombre del lote <span class="req">*</span></label>
@@ -387,29 +418,40 @@
                 <input type="number" class="form-input" name="areaHa" [(ngModel)]="formCultivo.areaHa" required min="0.01" step="0.01" placeholder="Ej: 2.5">
               </div>
             </div>
+
             <div class="form-group">
               <label class="form-label">Ubicación <span class="req">*</span></label>
               <input type="text" class="form-input" name="ubicacion" [(ngModel)]="formCultivo.ubicacion" required placeholder="Ej: Cajamarca, sector Los Alisos">
             </div>
+
             <div class="form-group">
-              <label class="form-label">Descripción</label>
-              <textarea class="form-input" name="descripcion" [(ngModel)]="formCultivo.descripcion" rows="2" placeholder="Detalles adicionales del lote..."></textarea>
+              <label class="form-label">Estado productivo del lote</label>
+              <select class="form-input" name="estadoCultivoLote" [(ngModel)]="formCultivo.estado">
+                <option value="SEMBRADO">Sembrado</option>
+                <option value="CRECIMIENTO">Crecimiento</option>
+                <option value="COSECHA">Cosecha</option>
+                <option value="FINALIZADO">Finalizado</option>
+                <option value="PERDIDA">Pérdida</option>
+              </select>
             </div>
           </div>
 
-          <button type="submit" class="btn-primary w-100 btn-lg" [disabled]="!formCultivoRef.valid">
-            🌾 Registrar Cultivo
+          <button type="submit" id="btn-registrar-cultivo" class="btn-primary w-100 btn-lg" [disabled]="!formCultivoRef.valid">
+            🌾 Registrar Cultivo y Lote
           </button>
+
         </form>
       </div>
     </section>
 
-    <!-- ===== MIS PRODUCTOS ===== -->
+    <!-- ===== SECCIÓN: MIS PRODUCTOS ===== -->
     <section *ngIf="seccionActiva() === 'productos'" class="content-section">
+
       <div class="alert-box alert-success mb-4" *ngIf="mensajeExito">
         <span class="alert-icon">✅</span>
         <span>{{ mensajeExito }}</span>
       </div>
+
       <div class="table-header">
         <h2>Registro de Productos</h2>
         <span class="table-count">{{ misProductos.length }} registros</span>
@@ -418,7 +460,12 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Fecha</th><th>Producto</th><th>Categoría</th><th>Precio / Unidad</th><th>Stock</th><th>Estado</th>
+              <th>Fecha</th>
+              <th>Producto</th>
+              <th>Categoría</th>
+              <th>Precio / Unidad</th>
+              <th>Stock</th>
+              <th>Estado</th>
             </tr>
           </thead>
           <tbody>
@@ -438,17 +485,20 @@
       </div>
     </section>
 
-    <!-- ===== SUBIR PRODUCTO ===== -->
+    <!-- ===== SECCIÓN: SUBIR PRODUCTO ===== -->
     <section *ngIf="seccionActiva() === 'subir'" class="content-section">
-      <div class="card border-0 shadow-sm rounded-4 mx-auto" style="max-width:600px;">
+      <div class="card border-0 shadow-sm rounded-4 max-w-2xl mx-auto" style="max-width: 600px;">
         <div class="card-body p-4 p-md-5">
-          <h4 class="fw-bold mb-1 text-success">Registrar nuevo producto</h4>
-          <p class="text-muted small mb-4">La publicación será revisada por un administrador antes de mostrarse en el catálogo.</p>
+          <h4 class="fw-bold mb-1 text-success"><i class="bi bi-box-seam me-2"></i>Registrar nuevo producto</h4>
+          <p class="text-muted small mb-4">La publicación será revisada por un administrador antes de mostrarse a los compradores en el catálogo público.</p>
+
           <form (ngSubmit)="subirProducto()" #formRef="ngForm">
+
             <div class="mb-3">
               <label class="form-label small fw-bold">Nombre del producto</label>
               <input type="text" class="form-control bg-light" name="nombre" [(ngModel)]="formProducto.nombre" required placeholder="Ej: Papas Nativas">
             </div>
+
             <div class="mb-3">
               <label class="form-label small fw-bold">Categoría</label>
               <select class="form-select bg-light" name="categoria" [(ngModel)]="formProducto.categoria" required>
@@ -460,6 +510,7 @@
                 <option value="Lácteos">Lácteos</option>
               </select>
             </div>
+
             <div class="row mb-3">
               <div class="col-6">
                 <label class="form-label small fw-bold">Precio (S/)</label>
@@ -475,23 +526,27 @@
                 </select>
               </div>
             </div>
+
             <div class="mb-3">
               <label class="form-label small fw-bold">Stock disponible</label>
               <input type="number" class="form-control bg-light" name="stock" [(ngModel)]="formProducto.stock" required min="1">
             </div>
+
             <div class="mb-4">
-              <label class="form-label small fw-bold">Descripción</label>
+              <label class="form-label small fw-bold">Descripción / Detalles adicionales</label>
               <textarea class="form-control bg-light" name="descripcion" [(ngModel)]="formProducto.descripcion" rows="3" required placeholder="Describe la calidad, procedencia, etc..."></textarea>
             </div>
+
             <button type="submit" class="btn btn-success w-100 rounded-pill py-2 fw-bold" [disabled]="!formRef.valid">
               Enviar a revisión
             </button>
+
           </form>
         </div>
       </div>
     </section>
 
-    <!-- ===== PERFIL ===== -->
+    <!-- ===== SECCIÓN: PERFIL ===== -->
     <section *ngIf="seccionActiva() === 'perfil'" class="content-section">
       <div class="perfil-card mx-auto">
         <div class="perfil-avatar">{{ usuario.nombre.charAt(0).toUpperCase() }}</div>
@@ -513,6 +568,222 @@
         </div>
       </div>
     </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         RF04 · RF09 – MIS LOTES COMERCIALES
+    ═══════════════════════════════════════════════════════════ -->
+    <section *ngIf="seccionActiva() === 'lotes'" class="content-section">
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Total Lotes</span>
+          <span class="kpi-value">{{ totalLotes }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Publicados</span>
+          <span class="kpi-value kpi-green">{{ lotesPublicados }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Agotados</span>
+          <span class="kpi-value kpi-red">{{ lotesAgotados }}</span>
+        </div>
+      </div>
+
+      <!-- Tabla de lotes -->
+      <div class="section-header">
+        <span class="table-count">{{ misLotes.length }} lotes</span>
+        <button class="btn-primary btn-sm" (click)="irA('nuevo-lote')">+ Publicar Lote</button>
+      </div>
+
+      <div *ngIf="misLotes.length === 0" class="empty-state">
+        <p>No tienes lotes publicados aún.</p>
+        <button class="btn-primary" (click)="irA('nuevo-lote')">Publicar primer lote</button>
+      </div>
+
+      <div *ngIf="misLotes.length > 0" class="table-container">
+        <table class="tabla-cultivos">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Calidad</th>
+              <th>Cantidad</th>
+              <th>Stock</th>
+              <th>Precio/Unidad</th>
+              <th>Entrega</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let lote of misLotes">
+              <td>#{{ lote.id }}</td>
+              <td>{{ calidadLabel(lote.calidad) }}</td>
+              <td>{{ lote.cantidadKg }} {{ lote.unidadMedida }}</td>
+              <td>
+                <span [class]="lote.stockDisponible === 0 ? 'kpi-red' : 'kpi-green'">
+                  {{ lote.stockDisponible }} {{ lote.unidadMedida }}
+                </span>
+              </td>
+              <td>S/. {{ lote.precioUnitario | number:'1.2-2' }}</td>
+              <td>{{ lote.fechaEntregaEstimada }}</td>
+              <td>
+                <span class="badge" [ngClass]="estadoLoteComercialClass(lote.estado)">
+                  {{ lote.estado }}
+                </span>
+              </td>
+              <td class="acciones-cell">
+                <button class="btn-sm btn-secondary" (click)="abrirAjusteStock(lote)" title="Ajustar stock">
+                  🔧 Stock
+                </button>
+                <button class="btn-sm btn-outline" (click)="verHistorialStock(lote)" title="Ver historial">
+                  📋 Historial
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Panel: Ajuste de stock (RF09) -->
+      <div *ngIf="panelLoteActivo === 'ajuste-stock' && loteSeleccionado" class="panel-detalle">
+        <div class="panel-header">
+          <h3>🔧 Ajuste de Stock — Lote #{{ loteSeleccionado.id }}</h3>
+          <button class="btn-cerrar" (click)="cerrarPanelLote()">✕</button>
+        </div>
+        <p class="panel-info">Stock actual: <strong>{{ loteSeleccionado.stockDisponible }} {{ loteSeleccionado.unidadMedida }}</strong></p>
+
+        <div *ngIf="mensajeExitoAjuste" class="alert alert-success">{{ mensajeExitoAjuste }}</div>
+        <div *ngIf="errorAjuste" class="alert alert-error">{{ errorAjuste }}</div>
+
+        <div class="form-group">
+          <label>Tipo de Movimiento</label>
+          <select [(ngModel)]="formAjusteStock.tipo" class="form-control">
+            <option *ngFor="let op of movimientoOpciones" [value]="op">{{ tipoMovimientoLabel(op) }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cantidad ({{ loteSeleccionado.unidadMedida }})</label>
+          <input type="number" [(ngModel)]="formAjusteStock.cantidad" min="0.01" step="0.01" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Motivo</label>
+          <input type="text" [(ngModel)]="formAjusteStock.motivo" placeholder="Ej: Pérdida por plagas" class="form-control" />
+        </div>
+        <div class="panel-actions">
+          <button class="btn-secondary" (click)="cerrarPanelLote()">Cancelar</button>
+          <button class="btn-primary" (click)="guardarAjusteStock()">Guardar Ajuste</button>
+        </div>
+      </div>
+
+      <!-- Panel: Historial de stock (RF09) -->
+      <div *ngIf="panelLoteActivo === 'historial-stock' && loteSeleccionado" class="panel-detalle">
+        <div class="panel-header">
+          <h3>📋 Historial de Stock — Lote #{{ loteSeleccionado.id }}</h3>
+          <button class="btn-cerrar" (click)="cerrarPanelLote()">✕</button>
+        </div>
+        <p *ngIf="cargandoHistorial" class="loading-text">Cargando historial...</p>
+        <p *ngIf="!cargandoHistorial && historialMovimientos.length === 0" class="empty-state-sm">Sin movimientos registrados.</p>
+        <div *ngIf="!cargandoHistorial && historialMovimientos.length > 0" class="table-container">
+          <table class="tabla-cultivos">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let mov of historialMovimientos">
+                <td>{{ mov.fechaMovimiento | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td><span class="badge" [ngClass]="tipoMovimientoClass(mov.tipo)">{{ tipoMovimientoLabel(mov.tipo) }}</span></td>
+                <td>{{ mov.cantidad }}</td>
+                <td>{{ mov.motivo }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         RF04 – PUBLICAR NUEVO LOTE COMERCIAL
+    ═══════════════════════════════════════════════════════════ -->
+    <section *ngIf="seccionActiva() === 'nuevo-lote'" class="content-section">
+      <div class="form-card">
+        <h2 class="form-card-title">📤 Publicar Lote Comercial</h2>
+        <p class="form-card-subtitle">Completa todos los campos. El lote se publicará inmediatamente en el catálogo.</p>
+
+        <div *ngIf="mensajeExitoLoteComercial" class="alert alert-success">{{ mensajeExitoLoteComercial }}</div>
+        <div *ngIf="errorLoteComercial" class="alert alert-error">{{ errorLoteComercial }}</div>
+
+        <div class="form-grid">
+          <!-- Cultivo -->
+          <div class="form-group form-col-full">
+            <label>Cultivo asociado *</label>
+            <select [(ngModel)]="formLoteComercial.cultivoId" class="form-control" required>
+              <option [value]="0" disabled>Selecciona un cultivo</option>
+              <option *ngFor="let c of misCultivos" [value]="c.id">
+                {{ c.nombreProducto }} — {{ c.variedad }} ({{ c.nombreLote }})
+              </option>
+            </select>
+          </div>
+
+          <!-- Cantidad y Unidad -->
+          <div class="form-group">
+            <label>Cantidad *</label>
+            <input type="number" [(ngModel)]="formLoteComercial.cantidadKg" min="0.01" step="0.01"
+                   placeholder="Ej: 500" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Unidad de medida *</label>
+            <select [(ngModel)]="formLoteComercial.unidadMedida" class="form-control">
+              <option value="kg">Kilogramos (kg)</option>
+              <option value="tn">Toneladas (tn)</option>
+              <option value="unidad">Unidades</option>
+              <option value="caja">Cajas</option>
+            </select>
+          </div>
+
+          <!-- Calidad y Precio -->
+          <div class="form-group">
+            <label>Calidad *</label>
+            <select [(ngModel)]="formLoteComercial.calidad" class="form-control" required>
+              <option *ngFor="let c of calidadOpciones" [value]="c">{{ calidadLabel(c) }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Precio unitario (S/.) *</label>
+            <input type="number" [(ngModel)]="formLoteComercial.precioUnitario" min="0.01" step="0.01"
+                   placeholder="Ej: 3.50" class="form-control" required />
+          </div>
+
+          <!-- Fecha de entrega -->
+          <div class="form-group">
+            <label>Fecha estimada de entrega *</label>
+            <input type="date" [(ngModel)]="formLoteComercial.fechaEntregaEstimada"
+                   class="form-control" required />
+          </div>
+
+          <!-- Condiciones -->
+          <div class="form-group form-col-full">
+            <label>Condiciones de entrega</label>
+            <textarea [(ngModel)]="formLoteComercial.condicionesEntrega" rows="3"
+                      placeholder="Ej: Entrega en almacén, refrigeración requerida..."
+                      class="form-control"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-secondary" (click)="irA('lotes')">Cancelar</button>
+          <button class="btn-primary" (click)="publicarLoteComercial()">
+            📤 Publicar Lote
+          </button>
+        </div>
+      </div>
+    </section>
+
 
   </main>
 </div>

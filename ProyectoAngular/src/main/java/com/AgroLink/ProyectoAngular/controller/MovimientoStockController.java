@@ -11,7 +11,6 @@ import com.AgroLink.ProyectoAngular.service.MovimientoStockService;
 
 @RestController
 @RequestMapping("/api/movimientos-stock")
-
 public class MovimientoStockController {
 
     private final MovimientoStockService movimientoStockService;
@@ -23,6 +22,12 @@ public class MovimientoStockController {
     @GetMapping
     public ResponseEntity<List<MovimientoStock>> listarTodos() {
         return ResponseEntity.ok(movimientoStockService.listarTodos());
+    }
+
+    /** RF09 – Historial de movimientos de stock de un lote */
+    @GetMapping("/lote/{loteId}")
+    public ResponseEntity<List<MovimientoStock>> listarPorLote(@PathVariable Long loteId) {
+        return ResponseEntity.ok(movimientoStockService.listarPorLote(loteId));
     }
 
     @GetMapping("/{id}")
@@ -38,7 +43,8 @@ public class MovimientoStockController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MovimientoStock> actualizar(@PathVariable Long id, @RequestBody MovimientoStock movimiento) {
+    public ResponseEntity<MovimientoStock> actualizar(@PathVariable Long id,
+                                                       @RequestBody MovimientoStock movimiento) {
         if (movimientoStockService.buscarPorId(id) == null) return ResponseEntity.notFound().build();
         movimiento.setId(id);
         return ResponseEntity.ok(movimientoStockService.guardar(movimiento));

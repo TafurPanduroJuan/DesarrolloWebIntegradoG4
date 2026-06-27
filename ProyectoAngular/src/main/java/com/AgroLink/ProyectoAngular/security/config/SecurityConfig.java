@@ -107,6 +107,18 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT,    "/api/eventos-produccion/**").hasRole("AGRICULTOR")
                 .requestMatchers(HttpMethod.DELETE, "/api/eventos-produccion/**").hasRole("AGRICULTOR")
 
+                // ── RF04 / RF09 – Lotes comerciales ────────────────────────
+                .requestMatchers(HttpMethod.GET,    "/api/lotes/publicados").permitAll()
+                .requestMatchers(HttpMethod.GET,    "/api/lotes/**").authenticated()
+                .requestMatchers(HttpMethod.POST,   "/api/lotes/publicar").hasRole("AGRICULTOR")
+                .requestMatchers(HttpMethod.POST,   "/api/lotes").hasRole("AGRICULTOR")
+                .requestMatchers(HttpMethod.PUT,    "/api/lotes/**").hasRole("AGRICULTOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/lotes/**").hasRole("AGRICULTOR")
+                .requestMatchers(HttpMethod.PATCH,  "/api/lotes/*/stock").hasRole("AGRICULTOR")
+                .requestMatchers(HttpMethod.PATCH,  "/api/lotes/*/confirmar").authenticated()
+                .requestMatchers(HttpMethod.PATCH,  "/api/lotes/*/cancelar").authenticated()
+                .requestMatchers(HttpMethod.GET,  "/api/movimientos-stock/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/movimientos-stock").hasRole("AGRICULTOR")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

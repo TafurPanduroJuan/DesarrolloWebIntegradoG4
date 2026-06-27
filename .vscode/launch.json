@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-ProyectoAngularApplication<ProyectoAngular>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.AgroLink.ProyectoAngular.ProyectoAngularApplication",
+            "projectName": "ProyectoAngular",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

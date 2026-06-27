@@ -3,7 +3,24 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Auth, UsuarioSesion, ProductoAgrolink } from '../auth/services/auth';
-import { CultivoService, Cultivo, EstadoCultivo, TipoEvento } from './cultivo.service';
+import {
+  CultivoService,
+  Cultivo,
+  EstadoCultivo,
+  TipoEvento,
+  SeguimientoRequest,
+  EventoProduccionRequest,
+  EventoProduccion
+} from './cultivo.service';
+import {
+  LoteService,
+  LoteComercial,
+  LotePublicacionRequest,
+  AjusteStockRequest,
+  MovimientoStock,
+  CalidadLote,
+  TipoMovimiento
+} from './lote.service';
 
 @Component({
   selector: 'app-intranet-agricultor',
@@ -16,54 +33,123 @@ export class IntranetAgricultor implements OnInit {
   usuario: UsuarioSesion | null = null;
   seccionActiva = signal<string>('resumen');
 
-  // PRODUCTOS
+  // ──────────────────────────────────────────
+  // PRODUCTOS (mock)
+  // ──────────────────────────────────────────
   misProductos: ProductoAgrolink[] = [];
-  formProducto = { nombre: '', descripcion: '', precio: 0, categoria: '', unidad: 'kg', stock: 0 };
+
+  formProducto = {
+    nombre: '',
+    descripcion: '',
+    precio: 0,
+    categoria: '',
+    unidad: 'kg',
+    stock: 0
+  };
   mensajeExito = '';
 
-  // CULTIVOS
+  // ──────────────────────────────────────────
+  // CULTIVOS (RF02 · RF03 · RF16 · RF17)
+  // ──────────────────────────────────────────
   misCultivos: Cultivo[] = [];
-  panelActivo: string | null = null;
   cultivoSeleccionado: Cultivo | null = null;
+  panelActivo: string | null = null;
 
-  formCultivo = {
+  // Eventos cargados para el cultivo seleccionado
+  eventosCultivo: EventoProduccion[] = [];
+
+  // Formulario: Nuevo cultivo (RF02)
+  formCultivo: {
+    nombreProducto: string;
+    variedad: string;
+    fechaSiembra: string;
+    estado: EstadoCultivo;
+    nombreLote: string;
+    areaHa: number;
+    ubicacion: string;
+    descripcion: string;
+  } = {
     nombreProducto: '',
     variedad: '',
-    categoria: '',
+    fechaSiembra: '',
+    estado: 'SEMBRADO',
     nombreLote: '',
     areaHa: 0,
     ubicacion: '',
-    descripcion: '',
-    fechaSiembra: '',
-    fechaCosechaEstimada: '',
-    estado: 'SEMBRADO' as EstadoCultivo,
-    etapaProductiva: '',
+    descripcion: ''
   };
   mensajeExitoCultivo = '';
 
-  formLote = {
-    nombreLote: '',
-    areaHa: 0,
-    ubicacion: '',
-    descripcion: '',
-  };
-  mensajeExitoLote = '';
-
-  formSeguimiento = {
-    estado: 'SEMBRADO' as EstadoCultivo,
+  // Formulario: Seguimiento (RF03)
+  formSeguimiento: SeguimientoRequest = {
+    estado: 'SEMBRADO',
     etapaProductiva: '',
-    observacion: '',
+    observacion: ''
   };
   mensajeExitoSeguimiento = '';
 
-  formEvento = {
-    tipo: 'SIEMBRA' as TipoEvento,
+  // Formulario: Evento (RF17)
+  formEvento: {
+    tipo: TipoEvento;
+    descripcion: string;
+    fecha: string;
+  } = {
+    tipo: 'SIEMBRA',
     descripcion: '',
-    fecha: '',
+    fecha: new Date().toISOString().split('T')[0]
   };
   mensajeExitoEvento = '';
 
-  constructor(private auth: Auth, private cultivos: CultivoService, private router: Router) {}
+  estadosCultivo: EstadoCultivo[] = ['SEMBRADO', 'CRECIMIENTO', 'COSECHA', 'FINALIZADO', 'PERDIDA'];
+  tiposEvento: TipoEvento[] = ['SIEMBRA', 'FERTILIZACION', 'RIEGO', 'CONTROL_PLAGAS', 'COSECHA', 'PERDIDA_PARCIAL'];
+
+  // ──────────────────────────────────────────
+  // LOTES COMERCIALES (RF04 · RF09)
+  // ──────────────────────────────────────────
+  misLotes: LoteComercial[] = [];
+  loteSeleccionado: LoteComercial | null = null;
+  panelLoteActivo: string | null = null;
+
+  formLoteComercial: LotePublicacionRequest = {
+    cultivoId: 0,
+    cantidadKg: 0,
+    calidad: 'PRIMERA',
+    precioUnitario: 0,
+    unidadMedida: 'kg',
+    fechaEntregaEstimada: '',
+    condicionesEntrega: ''
+  };
+  mensajeExitoLoteComercial = '';
+  errorLoteComercial = '';
+
+
+  // ──────────────────────────────────────────
+  // RF16: Editar datos del cultivo/lote
+  // ──────────────────────────────────────────
+  formLote: {
+    nombreLote: string;
+    areaHa: number;
+    ubicacion: string;
+    estado: EstadoCultivo;
+  } = { nombreLote: '', areaHa: 0, ubicacion: '', estado: 'SEMBRADO' };
+  mensajeExitoLote = '';
+
+  formAjusteStock: AjusteStockRequest = { tipo: 'ENTRADA', cantidad: 0, motivo: '' };
+  mensajeExitoAjuste = '';
+  errorAjuste = '';
+
+  historialMovimientos: MovimientoStock[] = [];
+  cargandoHistorial = false;
+
+  calidadOpciones: CalidadLote[] = ['PRIMERA', 'SEGUNDA', 'TERCERA'];
+  movimientoOpciones: TipoMovimiento[] = ['ENTRADA', 'SALIDA', 'AJUSTE'];
+
+  constructor(
+    private auth: Auth,
+    private cultivoService: CultivoService,
+    private lotes: LoteService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
     this.usuario = this.auth.getUsuarioActual();
@@ -75,13 +161,20 @@ export class IntranetAgricultor implements OnInit {
   }
 
   cargarDatos() {
-    if (this.usuario) {
-      this.misProductos = this.auth.getProductosPorAgricultor(String(this.usuario.id));
-      this.cultivos.getMisCultivos().subscribe({
-        next: (data) => this.misCultivos = data,
-        error: () => this.misCultivos = []
-      });
-    }
+    if (!this.usuario) return;
+    this.misProductos = this.auth.getProductosPorAgricultor(String(this.usuario.id));
+    this.cultivoService.getCultivosPorAgricultor(this.usuario.id).subscribe({
+      next: (data) => { this.misCultivos = data; },
+      error: () => { this.misCultivos = []; }
+    });
+    this.cargarLotes();
+  }
+
+  cargarLotes() {
+    this.lotes.getTodosLotes().subscribe({
+      next: (data) => this.misLotes = data,
+      error: () => this.misLotes = []
+    });
   }
 
   irA(seccion: string) {
@@ -92,11 +185,13 @@ export class IntranetAgricultor implements OnInit {
 
   cerrarSesion() { this.auth.logout(); }
 
+  // ──────────────────────────────────────────
   // PRODUCTOS
+  // ──────────────────────────────────────────
   subirProducto() {
     this.auth.subirProducto({ ...this.formProducto });
     this.formProducto = { nombre: '', descripcion: '', precio: 0, categoria: '', unidad: 'kg', stock: 0 };
-    this.mensajeExito = '¡Producto enviado a revisión exitosamente!';
+    this.mensajeExito = 'Producto enviado a revisión exitosamente.';
     setTimeout(() => this.mensajeExito = '', 5000);
     this.cargarDatos();
     this.irA('productos');
@@ -116,14 +211,20 @@ export class IntranetAgricultor implements OnInit {
     return map[estado] || 'badge-default';
   }
 
-  // CULTIVOS - RF02
+  // ──────────────────────────────────────────
+  // CULTIVOS — RF02: Registrar cultivo
+  // ──────────────────────────────────────────
   guardarCultivo() {
-    this.cultivos.guardarCultivo({ ...this.formCultivo }).subscribe({
+    if (!this.usuario) return;
+    const payload: Partial<Cultivo> = {
+      ...this.formCultivo,
+      agricultorId: this.usuario.id
+    };
+    this.cultivoService.guardarCultivo(payload).subscribe({
       next: () => {
         this.formCultivo = {
-          nombreProducto: '', variedad: '', categoria: '', nombreLote: '',
-          areaHa: 0, ubicacion: '', descripcion: '', fechaSiembra: '',
-          fechaCosechaEstimada: '', estado: 'SEMBRADO', etapaProductiva: '',
+          nombreProducto: '', variedad: '', fechaSiembra: '', estado: 'SEMBRADO',
+          nombreLote: '', areaHa: 0, ubicacion: '', descripcion: ''
         };
         this.mensajeExitoCultivo = '¡Cultivo registrado exitosamente!';
         setTimeout(() => this.mensajeExitoCultivo = '', 5000);
@@ -134,72 +235,59 @@ export class IntranetAgricultor implements OnInit {
     });
   }
 
-  // LOTES - RF16
-  abrirEditarLote(cultivo: Cultivo) {
-    this.cultivoSeleccionado = cultivo;
-    this.formLote = {
-      nombreLote: cultivo.nombreLote,
-      areaHa:     cultivo.areaHa,
-      ubicacion:  cultivo.ubicacion,
-      descripcion: cultivo.descripcion,
-    };
-    this.panelActivo = 'editar-lote';
-  }
-
-  guardarLote() {
-    if (!this.cultivoSeleccionado) return;
-    this.cultivos.actualizarCultivo(this.cultivoSeleccionado.id, { ...this.formLote }).subscribe({
-      next: () => {
-        this.mensajeExitoLote = '¡Lote actualizado correctamente!';
-        setTimeout(() => this.mensajeExitoLote = '', 4000);
-        this.cargarDatos();
-      },
-      error: () => this.mensajeExitoLote = 'Error al actualizar lote.'
-    });
-  }
-
-  // SEGUIMIENTO - RF03
+  // ──────────────────────────────────────────
+  // SEGUIMIENTO — RF03
+  // ──────────────────────────────────────────
   abrirSeguimiento(cultivo: Cultivo) {
     this.cultivoSeleccionado = cultivo;
     this.formSeguimiento = {
       estado: cultivo.estado,
-      etapaProductiva: cultivo.etapaProductiva || '',
-      observacion: '',
+      etapaProductiva: cultivo.etapaProductiva,
+      observacion: cultivo.observacionSeguimiento || ''
     };
     this.panelActivo = 'seguimiento';
   }
 
   guardarSeguimiento() {
     if (!this.cultivoSeleccionado) return;
-    this.cultivos.actualizarSeguimiento(this.cultivoSeleccionado.id, { ...this.formSeguimiento }).subscribe({
-      next: () => {
-        this.formSeguimiento = { estado: this.formSeguimiento.estado, etapaProductiva: '', observacion: '' };
+    this.cultivoService.actualizarSeguimiento(this.cultivoSeleccionado.id, { ...this.formSeguimiento }).subscribe({
+      next: (actualizado) => {
         this.mensajeExitoSeguimiento = '¡Seguimiento registrado!';
         setTimeout(() => this.mensajeExitoSeguimiento = '', 4000);
         this.cargarDatos();
+        this.cultivoSeleccionado = { ...actualizado };
       },
       error: () => this.mensajeExitoSeguimiento = 'Error al registrar seguimiento.'
     });
   }
 
-  // EVENTOS - RF17
+  // ──────────────────────────────────────────
+  // EVENTOS — RF17
+  // ──────────────────────────────────────────
   abrirEventos(cultivo: Cultivo) {
     this.cultivoSeleccionado = cultivo;
+    this.eventosCultivo = [];
     this.formEvento = {
       tipo: 'SIEMBRA',
       descripcion: '',
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: new Date().toISOString().split('T')[0]
     };
     this.panelActivo = 'eventos';
+    this.cultivoService.getEventosPorCultivo(cultivo.id).subscribe({
+      next: (data) => this.eventosCultivo = data,
+      error: () => this.eventosCultivo = []
+    });
   }
 
   guardarEvento() {
     if (!this.cultivoSeleccionado) return;
-    this.cultivos.agregarEvento({
+    const req: EventoProduccionRequest = {
       ...this.formEvento,
       cultivoId: this.cultivoSeleccionado.id
-    }).subscribe({
-      next: () => {
+    };
+    this.cultivoService.agregarEvento(req).subscribe({
+      next: (nuevo) => {
+        this.eventosCultivo = [nuevo, ...this.eventosCultivo];
         this.formEvento = { tipo: this.formEvento.tipo, descripcion: '', fecha: new Date().toISOString().split('T')[0] };
         this.mensajeExitoEvento = '¡Evento registrado!';
         setTimeout(() => this.mensajeExitoEvento = '', 4000);
@@ -211,22 +299,14 @@ export class IntranetAgricultor implements OnInit {
   cerrarPanel() {
     this.panelActivo = null;
     this.cultivoSeleccionado = null;
+    this.eventosCultivo = [];
   }
 
-  // KPIs
+  // ──────────────────────────────────────────
+  // KPIs Cultivos
+  // ──────────────────────────────────────────
   get totalCultivos()   { return this.misCultivos.length; }
   get cultivosActivos() { return this.misCultivos.filter(c => c.estado === 'SEMBRADO' || c.estado === 'CRECIMIENTO').length; }
-
-  estadoCultivoLabel(estado: EstadoCultivo): string {
-    const map: Record<EstadoCultivo, string> = {
-      'SEMBRADO':    'Sembrado',
-      'CRECIMIENTO': 'Crecimiento',
-      'COSECHA':     'Cosecha',
-      'FINALIZADO':  'Finalizado',
-      'PERDIDA':     'Pérdida',
-    };
-    return map[estado] || estado;
-  }
 
   estadoCultivoBadgeClass(estado: EstadoCultivo): string {
     const map: Record<EstadoCultivo, string> = {
@@ -237,6 +317,17 @@ export class IntranetAgricultor implements OnInit {
       'PERDIDA':     'badge-cancelado',
     };
     return map[estado] || '';
+  }
+
+  estadoCultivoLabel(estado: EstadoCultivo): string {
+    const map: Record<EstadoCultivo, string> = {
+      'SEMBRADO':    'Sembrado',
+      'CRECIMIENTO': 'Crecimiento',
+      'COSECHA':     'Cosecha',
+      'FINALIZADO':  'Finalizado',
+      'PERDIDA':     'Pérdida',
+    };
+    return map[estado] || estado;
   }
 
   tipoEventoLabel(tipo: TipoEvento): string {
@@ -250,4 +341,146 @@ export class IntranetAgricultor implements OnInit {
     };
     return map[tipo] || tipo;
   }
+
+  // ──────────────────────────────────────────
+  // RF04: Publicar lote comercial
+  // ──────────────────────────────────────────
+  publicarLoteComercial() {
+    this.errorLoteComercial = '';
+    if (!this.formLoteComercial.cultivoId) {
+      this.errorLoteComercial = 'Selecciona un cultivo.';
+      return;
+    }
+    this.lotes.publicarLote(this.formLoteComercial).subscribe({
+      next: (lote) => {
+        this.mensajeExitoLoteComercial = `✅ Lote publicado exitosamente (ID: ${lote.id})`;
+        setTimeout(() => this.mensajeExitoLoteComercial = '', 5000);
+        this.formLoteComercial = {
+          cultivoId: 0, cantidadKg: 0, calidad: 'PRIMERA',
+          precioUnitario: 0, unidadMedida: 'kg',
+          fechaEntregaEstimada: '', condicionesEntrega: ''
+        };
+        this.cargarLotes();
+        this.irA('lotes');
+      },
+      error: (err) => {
+        this.errorLoteComercial = err.error?.error || 'Error al publicar el lote.';
+      }
+    });
+  }
+
+  // ──────────────────────────────────────────
+  // RF09: Ajuste manual de stock
+  // ──────────────────────────────────────────
+  abrirAjusteStock(lote: LoteComercial) {
+    this.loteSeleccionado = lote;
+    this.formAjusteStock = { tipo: 'ENTRADA', cantidad: 0, motivo: '' };
+    this.mensajeExitoAjuste = '';
+    this.errorAjuste = '';
+    this.panelLoteActivo = 'ajuste-stock';
+  }
+
+  guardarAjusteStock() {
+    if (!this.loteSeleccionado) return;
+    this.errorAjuste = '';
+    this.lotes.ajustarStock(this.loteSeleccionado.id, this.formAjusteStock).subscribe({
+      next: (loteActualizado) => {
+        this.mensajeExitoAjuste = `✅ Stock actualizado. Nuevo stock: ${loteActualizado.stockDisponible} ${loteActualizado.unidadMedida}`;
+        setTimeout(() => {
+          this.mensajeExitoAjuste = '';
+          this.cerrarPanelLote();
+        }, 3000);
+        this.cargarLotes();
+      },
+      error: (err) => {
+        this.errorAjuste = err.error?.error || 'Error al ajustar el stock.';
+      }
+    });
+  }
+
+  verHistorialStock(lote: LoteComercial) {
+    this.loteSeleccionado = lote;
+    this.historialMovimientos = [];
+    this.cargandoHistorial = true;
+    this.panelLoteActivo = 'historial-stock';
+    this.lotes.getMovimientosPorLote(lote.id).subscribe({
+      next: (data) => { this.historialMovimientos = data; this.cargandoHistorial = false; },
+      error: () => { this.cargandoHistorial = false; }
+    });
+  }
+
+  cerrarPanelLote() {
+    this.panelLoteActivo = null;
+    this.loteSeleccionado = null;
+  }
+
+  // ── KPIs Lotes ──────────────────────────────────────────────
+  get totalLotes()       { return this.misLotes.length; }
+  get lotesPublicados()  { return this.misLotes.filter(l => l.publicado).length; }
+  get lotesAgotados()    { return this.misLotes.filter(l => l.estado === 'AGOTADO').length; }
+
+  estadoLoteComercialClass(estado: string): string {
+    const map: Record<string, string> = {
+      'ACTIVO':   'badge-entregado',
+      'AGOTADO':  'badge-cancelado',
+      'INACTIVO': 'badge-pendiente',
+    };
+    return map[estado] || 'badge-default';
+  }
+
+  calidadLabel(calidad: CalidadLote): string {
+    const map: Record<CalidadLote, string> = {
+      'PRIMERA': '⭐⭐⭐ Primera',
+      'SEGUNDA': '⭐⭐ Segunda',
+      'TERCERA': '⭐ Tercera',
+    };
+    return map[calidad] || calidad;
+  }
+
+  tipoMovimientoLabel(tipo: TipoMovimiento): string {
+    const map: Record<TipoMovimiento, string> = {
+      'ENTRADA': '📦 Entrada',
+      'SALIDA':  '📤 Salida',
+      'AJUSTE':  '🔧 Ajuste',
+    };
+    return map[tipo] || tipo;
+  }
+
+  tipoMovimientoClass(tipo: TipoMovimiento): string {
+    const map: Record<TipoMovimiento, string> = {
+      'ENTRADA': 'badge-entregado',
+      'SALIDA':  'badge-cancelado',
+      'AJUSTE':  'badge-pendiente',
+    };
+    return map[tipo] || '';
+  }
+  // ──────────────────────────────────────────
+  // RF16: Editar lote agrícola
+  // ──────────────────────────────────────────
+  abrirEditarLote(cultivo: Cultivo) {
+    this.cultivoSeleccionado = cultivo;
+    this.formLote = {
+      nombreLote: cultivo.nombreLote,
+      areaHa:     cultivo.areaHa,
+      ubicacion:  cultivo.ubicacion,
+      estado:     cultivo.estado,
+    };
+    this.panelActivo = 'editar-lote';
+  }
+
+  guardarLote() {
+    if (!this.cultivoSeleccionado) return;
+    const payload: Partial<Cultivo> = { ...this.formLote };
+    this.cultivoService.actualizarCultivo(this.cultivoSeleccionado.id, payload).subscribe({
+      next: (actualizado) => {
+        this.mensajeExitoLote = '¡Cultivo actualizado correctamente!';
+        setTimeout(() => this.mensajeExitoLote = '', 4000);
+        this.cultivoSeleccionado = { ...actualizado };
+        this.cargarDatos();
+      },
+      error: () => this.mensajeExitoLote = 'Error al actualizar cultivo.'
+    });
+  }
+
+
 }
