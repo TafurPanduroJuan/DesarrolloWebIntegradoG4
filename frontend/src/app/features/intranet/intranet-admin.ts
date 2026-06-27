@@ -1,4 +1,4 @@
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../environments/environment';
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
