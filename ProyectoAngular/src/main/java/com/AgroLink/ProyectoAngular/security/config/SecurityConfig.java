@@ -109,6 +109,7 @@ public class SecurityConfig {
 
                 // ── RF04 / RF09 – Lotes comerciales ────────────────────────
                 .requestMatchers(HttpMethod.GET,    "/api/lotes/publicados").permitAll()
+                .requestMatchers(HttpMethod.GET,    "/api/lotes/publicados/buscar").permitAll()
                 .requestMatchers(HttpMethod.GET,    "/api/lotes/**").authenticated()
                 .requestMatchers(HttpMethod.POST,   "/api/lotes/publicar").hasRole("AGRICULTOR")
                 .requestMatchers(HttpMethod.POST,   "/api/lotes").hasRole("AGRICULTOR")
