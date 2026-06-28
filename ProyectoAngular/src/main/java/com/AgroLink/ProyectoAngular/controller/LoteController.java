@@ -1,15 +1,19 @@
 package com.AgroLink.ProyectoAngular.controller;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 import jakarta.validation.Valid;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.AgroLink.ProyectoAngular.dto.AjusteStockRequest;
+import com.AgroLink.ProyectoAngular.dto.LoteCatalogoResponse;
 import com.AgroLink.ProyectoAngular.dto.LotePublicacionRequest;
 import com.AgroLink.ProyectoAngular.model.Lote;
 import com.AgroLink.ProyectoAngular.service.LoteService;
@@ -38,6 +42,32 @@ public class LoteController {
     @GetMapping("/publicados")
     public ResponseEntity<List<Lote>> listarPublicados() {
         return ResponseEntity.ok(loteService.listarPublicados());
+    }
+
+    /**
+     * GET /api/lotes/publicados/buscar
+     * RF05 – Catálogo con filtros opcionales.
+     * RF25 – Búsqueda avanzada (busqueda, categoria, calidad, precio, ubicacion, fechas).
+     * RF21 – El campo calidad filtra por PRIMERA / SEGUNDA / TERCERA.
+     * RNF02 – El query usa índices y JOIN optimizado; responde en < 2 s.
+     *
+     * Todos los parámetros son opcionales. Sin parámetros devuelve el catálogo completo.
+     */
+    @GetMapping("/publicados/buscar")
+    public ResponseEntity<List<LoteCatalogoResponse>> buscarCatalogo(
+            @RequestParam(required = false) String busqueda,
+            @RequestParam(required = false) String categoria,
+            @RequestParam(required = false) String calidad,
+            @RequestParam(required = false) BigDecimal precioMin,
+            @RequestParam(required = false) BigDecimal precioMax,
+            @RequestParam(required = false) String ubicacion,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta) {
+
+        List<LoteCatalogoResponse> resultado = loteService.buscarCatalogo(
+            calidad, precioMin, precioMax, categoria, ubicacion, busqueda, fechaDesde, fechaHasta
+        );
+        return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/cultivo/{cultivoId}")

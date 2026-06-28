@@ -1,17 +1,24 @@
 package com.AgroLink.ProyectoAngular.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.AgroLink.ProyectoAngular.dto.AjusteStockRequest;
+import com.AgroLink.ProyectoAngular.dto.LoteCatalogoResponse;
 import com.AgroLink.ProyectoAngular.dto.LotePublicacionRequest;
+import com.AgroLink.ProyectoAngular.model.Cultivo;
 import com.AgroLink.ProyectoAngular.model.Lote;
 import com.AgroLink.ProyectoAngular.model.MovimientoStock;
+import com.AgroLink.ProyectoAngular.model.enums.CalidadLoteEnum;
 import com.AgroLink.ProyectoAngular.model.enums.EstadoLoteEnum;
 import com.AgroLink.ProyectoAngular.model.enums.TipoMovimientoEnum;
+import com.AgroLink.ProyectoAngular.repository.CultivoRepository;
 import com.AgroLink.ProyectoAngular.repository.LoteRepository;
 import com.AgroLink.ProyectoAngular.repository.MovimientoStockRepository;
 
@@ -27,11 +34,14 @@ public class LoteService {
 
     private final LoteRepository loteRepository;
     private final MovimientoStockRepository movimientoRepository;
+    private final CultivoRepository cultivoRepository;
 
     public LoteService(LoteRepository loteRepository,
-                       MovimientoStockRepository movimientoRepository) {
-        this.loteRepository    = loteRepository;
+                       MovimientoStockRepository movimientoRepository,
+                       CultivoRepository cultivoRepository) {
+        this.loteRepository       = loteRepository;
         this.movimientoRepository = movimientoRepository;
+        this.cultivoRepository    = cultivoRepository;
     }
 
     // ── Consultas ────────────────────────────────────────────────
@@ -42,6 +52,62 @@ public class LoteService {
 
     public List<Lote> listarPublicados() {
         return loteRepository.findByPublicadoTrue();
+    }
+
+    /**
+     * RF05 / RF25 — Búsqueda del catálogo con filtros opcionales.
+     * Devuelve LoteCatalogoResponse enriquecido con datos del Cultivo
+     * para que el frontend no necesite hacer llamadas extra.
+     */
+    public List<LoteCatalogoResponse> buscarCatalogo(
+            String calidad,
+            BigDecimal precioMin,
+            BigDecimal precioMax,
+            String categoria,
+            String ubicacion,
+            String busqueda,
+            LocalDate fechaDesde,
+            LocalDate fechaHasta) {
+
+        CalidadLoteEnum calidadEnum = null;
+        if (calidad != null && !calidad.isBlank()) {
+            try { calidadEnum = CalidadLoteEnum.valueOf(calidad.toUpperCase()); }
+            catch (IllegalArgumentException ignored) {}
+        }
+
+        List<Lote> lotes = loteRepository.buscarConFiltros(
+            calidadEnum, precioMin, precioMax,
+            (categoria != null && !categoria.isBlank()) ? categoria.toUpperCase() : null,
+            ubicacion, busqueda, fechaDesde, fechaHasta
+        );
+
+        return lotes.stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    private LoteCatalogoResponse toResponse(Lote l) {
+        LoteCatalogoResponse r = new LoteCatalogoResponse();
+        r.setLoteId(l.getId());
+        r.setCultivoId(l.getCultivoId());
+        r.setCalidad(l.getCalidad() != null ? l.getCalidad().name() : null);
+        r.setPrecioUnitario(l.getPrecioUnitario());
+        r.setUnidadMedida(l.getUnidadMedida());
+        r.setStockDisponible(l.getStockDisponible());
+        r.setFechaEntregaEstimada(l.getFechaEntregaEstimada());
+        r.setFechaCosecha(l.getFechaCosecha());
+        r.setCondicionesEntrega(l.getCondicionesEntrega());
+        r.setEstado(l.getEstado() != null ? l.getEstado().name() : null);
+
+        cultivoRepository.findById(l.getCultivoId()).ifPresent(c -> {
+            r.setNombreProducto(c.getNombreProducto());
+            r.setVariedad(c.getVariedad());
+            r.setCategoria(c.getCategoria() != null ? c.getCategoria().name() : null);
+            r.setUbicacion(c.getUbicacion());
+            r.setAgricultorId(c.getAgricultorId());
+        });
+
+        return r;
     }
 
     public List<Lote> listarPorCultivo(Long cultivoId) {
