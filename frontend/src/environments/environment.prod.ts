@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://desarrollowebintegradog4.onrender.com/api'
+  apiUrl: 'https://agrolink-backend-wsmm.onrender.com/api'
 };
