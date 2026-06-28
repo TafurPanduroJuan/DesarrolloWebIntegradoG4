@@ -789,3 +789,320 @@
   .form-card     { padding: 20px; border-radius: 14px; }
   .table-header-actions { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
+
+/* ===================================================
+   RF04 / RF09 — LOTES COMERCIALES
+=================================================== */
+
+/* KPI values con color */
+.kpi-value.kpi-green { color: #16a34a; }
+.kpi-value.kpi-red   { color: #dc2626; }
+
+/* Header de sección con botón */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+/* Empty state */
+.empty-state {
+  background: #fff;
+  border-radius: 16px;
+  padding: 48px 24px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px dashed #d1d5db;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.empty-state p {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0;
+}
+.empty-state-sm {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  text-align: center;
+  padding: 16px 0;
+}
+
+/* Tabla de lotes (misma estética que data-table pero renombrada) */
+.table-container {
+  background: #fff;
+  border-radius: 16px;
+  overflow: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.tabla-cultivos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.tabla-cultivos thead {
+  background: #f8fdf8;
+}
+.tabla-cultivos th {
+  padding: 13px 16px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+.tabla-cultivos td {
+  padding: 13px 16px;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+.tabla-cultivos tbody tr:last-child td { border-bottom: none; }
+.tabla-cultivos tbody tr:hover { background: #f9fafb; }
+
+/* Celda de acciones */
+.acciones-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Botones secundarios */
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-secondary:hover { background: #e5e7eb; }
+
+.btn-outline {
+  background: transparent;
+  color: #2d5a27;
+  border: 1.5px solid #2d5a27;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-outline:hover { background: #f0fdf0; }
+
+.btn-sm {
+  padding: 7px 12px !important;
+  font-size: 0.8rem !important;
+  border-radius: 8px !important;
+}
+
+/* Stock inline color */
+.stock-ok  { color: #16a34a; font-weight: 700; }
+.stock-bad { color: #dc2626; font-weight: 700; }
+
+/* Badges de estado de lote */
+.badge-lote-activo-com  { background: #dcfce7; color: #15803d; }
+.badge-lote-inactivo-com{ background: #f3f4f6; color: #6b7280; }
+.badge-lote-agotado-com { background: #fee2e2; color: #b91c1c; }
+
+/* Badges de tipo de movimiento */
+.badge-entrada { background: #dcfce7; color: #15803d; }
+.badge-salida  { background: #fee2e2; color: #b91c1c; }
+.badge-ajuste  { background: #fef9c3; color: #a16207; }
+
+/* Panel detalle (ajuste stock / historial) */
+.panel-detalle {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  padding: 24px;
+  margin-top: 20px;
+}
+.panel-detalle .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.panel-detalle .panel-header h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1a3c18;
+  margin: 0;
+}
+.btn-cerrar {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.btn-cerrar:hover { background: #fee2e2; }
+
+.panel-info {
+  font-size: 0.9rem;
+  color: #374151;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: #f8fdf8;
+  border-radius: 10px;
+  border-left: 4px solid #2d5a27;
+}
+.panel-info strong { color: #1a3c18; }
+
+/* Formulario dentro del panel-detalle */
+.panel-detalle .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.panel-detalle .form-group label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.form-control {
+  padding: 10px 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #1f2937;
+  background: #f9fafb;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+.form-control:focus {
+  border-color: #2d5a27;
+  box-shadow: 0 0 0 3px rgba(45,90,39,0.12);
+  background: #fff;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* Alertas dentro del panel */
+.alert {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+.alert-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.alert-error   { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+/* Formulario publicar lote */
+.form-card-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1a3c18;
+  margin: 0 0 4px;
+}
+.form-card-subtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0 0 24px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+.form-col-full { grid-column: 1 / -1; }
+
+.form-grid .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 0;
+}
+.form-grid .form-group label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.form-grid .form-control {
+  padding: 10px 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #1f2937;
+  background: #f9fafb;
+  outline: none;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-grid .form-control:focus {
+  border-color: #2d5a27;
+  box-shadow: 0 0 0 3px rgba(45,90,39,0.12);
+  background: #fff;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.loading-text {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  text-align: center;
+  padding: 16px 0;
+}
+
+@media (max-width: 768px) {
+  .form-grid       { grid-template-columns: 1fr; }
+  .form-col-full   { grid-column: 1; }
+  .panel-actions   { flex-direction: column; }
+  .acciones-cell   { flex-direction: column; gap: 6px; }
+}
