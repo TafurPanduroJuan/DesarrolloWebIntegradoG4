@@ -75,10 +75,18 @@ public class LoteService {
             catch (IllegalArgumentException ignored) {}
         }
 
+        // Con nativeQuery=true los parámetros deben ser String/primitivos,
+        // no enums ni LocalDate — los casteamos aquí antes de llamar al repo.
+        String calidadStr   = calidadEnum != null ? calidadEnum.name() : null;
+        String categoriaStr = (categoria != null && !categoria.isBlank())
+                              ? categoria.toUpperCase() : null;
+        String fechaDesdeStr = fechaDesde != null ? fechaDesde.toString() : null;
+        String fechaHastaStr = fechaHasta != null ? fechaHasta.toString() : null;
+
         List<Lote> lotes = loteRepository.buscarConFiltros(
-            calidadEnum, precioMin, precioMax,
-            (categoria != null && !categoria.isBlank()) ? categoria.toUpperCase() : null,
-            ubicacion, busqueda, fechaDesde, fechaHasta
+            calidadStr, precioMin, precioMax,
+            categoriaStr, ubicacion, busqueda,
+            fechaDesdeStr, fechaHastaStr
         );
 
         return lotes.stream()
