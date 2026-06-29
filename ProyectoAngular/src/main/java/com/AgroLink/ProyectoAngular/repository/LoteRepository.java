@@ -22,7 +22,8 @@ public interface LoteRepository extends JpaRepository<Lote, Long> {
      * Se usa SQL nativo en lugar de JPQL para evitar el bug de Hibernate 6
      * con PostgreSQL donde parámetros null en LOWER() se infieren como bytea
      * en vez de text, causando "function lower(bytea) does not exist".
-     * El cast explícito ::text resuelve el problema de tipos en PostgreSQL.
+     * Se usa CAST(col AS text) en lugar de col::text porque Spring Data
+     * interpreta '::' como inicio de parámetro nombrado y corrompe la query.
      */
     @Query(value = """
         SELECT l.* FROM lote l
@@ -32,10 +33,10 @@ public interface LoteRepository extends JpaRepository<Lote, Long> {
           AND (:calidad    IS NULL OR l.calidad = :calidad)
           AND (:precioMin  IS NULL OR l.precio_unitario >= CAST(:precioMin AS numeric))
           AND (:precioMax  IS NULL OR l.precio_unitario <= CAST(:precioMax AS numeric))
-          AND (:categoria  IS NULL OR c.categoria::text = :categoria)
-          AND (:ubicacion  IS NULL OR LOWER(c.ubicacion::text)       LIKE LOWER(CONCAT('%', :ubicacion, '%')))
-          AND (:busqueda   IS NULL OR LOWER(c.nombre_producto::text)  LIKE LOWER(CONCAT('%', :busqueda, '%'))
-                                   OR LOWER(COALESCE(c.variedad, '')) LIKE LOWER(CONCAT('%', :busqueda, '%')))
+          AND (:categoria  IS NULL OR CAST(c.categoria AS text) = :categoria)
+          AND (:ubicacion  IS NULL OR LOWER(CAST(c.ubicacion AS text))      LIKE LOWER(CONCAT('%', :ubicacion, '%')))
+          AND (:busqueda   IS NULL OR LOWER(CAST(c.nombre_producto AS text)) LIKE LOWER(CONCAT('%', :busqueda, '%'))
+                                   OR LOWER(COALESCE(c.variedad, ''))        LIKE LOWER(CONCAT('%', :busqueda, '%')))
           AND (:fechaDesde IS NULL OR l.fecha_entrega_estimada >= CAST(:fechaDesde AS date))
           AND (:fechaHasta IS NULL OR l.fecha_entrega_estimada <= CAST(:fechaHasta AS date))
         ORDER BY l.fecha_publicacion DESC
