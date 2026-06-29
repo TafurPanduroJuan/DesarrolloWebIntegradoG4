@@ -156,6 +156,7 @@
                 class="btn-pedir"
                 [disabled]="!estaDisponible(l)"
                 [class.disabled]="!estaDisponible(l)"
+                (click)="abrirModal(l); iniciarPedido()"
               >
                 Pedir
               </button>
@@ -196,7 +197,7 @@
       <i class="bi bi-x-lg"></i>
     </button>
 
-    <div class="modal-img-wrapper">
+    <div class="modal-img-wrapper" *ngIf="modalPaso !== 'exito'">
       <img
         [src]="'assets/img/p' + ((loteSeleccionado.loteId % 6) + 1) + '.jpg'"
         [alt]="loteSeleccionado.nombreProducto"
@@ -208,8 +209,8 @@
       </span>
     </div>
 
-    <div class="modal-body-scroll">
-
+    <!-- PASO 1: DETALLE -->
+    <div class="modal-body-scroll" *ngIf="modalPaso === 'detalle'">
       <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
           <h3 class="modal-product-nombre">
@@ -219,7 +220,6 @@
           <span class="modal-product-precio">S/. {{ loteSeleccionado.precioUnitario | number:'1.2-2' }}</span>
           <span class="modal-product-unidad"> / {{ loteSeleccionado.unidadMedida }}</span>
         </div>
-        <!-- RF21: calidad en modal -->
         <span class="badge-calidad ms-2" [ngClass]="{
           'calidad-primera': loteSeleccionado.calidad === 'PRIMERA',
           'calidad-segunda': loteSeleccionado.calidad === 'SEGUNDA',
@@ -274,13 +274,144 @@
         <button
           class="btn-modal-pedir"
           [disabled]="!estaDisponible(loteSeleccionado)"
-          [class.disabled]="!estaDisponible(loteSeleccionado)"
+          (click)="iniciarPedido()"
         >
           <i class="bi bi-cart-plus me-2"></i>
-          {{ estaDisponible(loteSeleccionado) ? 'Hacer pedido' : 'No disponible' }}
+          Hacer pedido
         </button>
       </div>
-
     </div>
+
+    <!-- PASO 2: FORMULARIO DE COMPRA (RF07 + RF12) -->
+    <div class="modal-body-scroll" *ngIf="modalPaso === 'pedido'">
+      <div class="d-flex align-items-center mb-3">
+        <button class="btn-back me-2" (click)="modalPaso = 'detalle'" title="Volver al detalle">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+        <h4 class="mb-0 fw-bold">Registrar Pedido</h4>
+      </div>
+
+      <div class="alert alert-info py-2 px-3 mb-3" style="font-size: 0.9rem;">
+        <strong>Producto:</strong> {{ loteSeleccionado.nombreProducto }} ({{ labelCalidad(loteSeleccionado.calidad) }}) <br>
+        <strong>Precio:</strong> S/. {{ loteSeleccionado.precioUnitario | number:'1.2-2' }} por {{ loteSeleccionado.unidadMedida }}
+      </div>
+
+      <div class="form-pedido-body">
+        <!-- Cantidad -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Cantidad a solicitar ({{ loteSeleccionado.unidadMedida }}):</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-hash"></i></span>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="pedidoCantidad"
+              min="1"
+              [max]="loteSeleccionado.stockDisponible"
+              required
+            />
+          </div>
+          <div class="form-text text-muted">
+            Stock disponible: {{ loteSeleccionado.stockDisponible | number:'1.0-2' }} {{ loteSeleccionado.unidadMedida }}
+          </div>
+        </div>
+
+        <!-- Fecha requerida -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Fecha requerida de entrega:</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+            <input
+              type="date"
+              class="form-control"
+              [(ngModel)]="pedidoFecha"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Observaciones especiales (RF12) -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Observaciones / Condiciones especiales:</label>
+          <textarea
+            class="form-control"
+            [(ngModel)]="pedidoNotas"
+            rows="3"
+            placeholder="Especifica aquí cualquier condición de entrega, empaque o nota para el agricultor..."
+          ></textarea>
+        </div>
+
+        <!-- Total estimado -->
+        <div class="card bg-light p-3 border-0 rounded-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted fw-semibold">Total Estimado:</span>
+            <span class="fs-4 fw-bold text-success">
+              S/. {{ (pedidoCantidad * loteSeleccionado.precioUnitario) | number:'1.2-2' }}
+            </span>
+          </div>
+        </div>
+
+        <div *ngIf="pedidoError" class="alert alert-danger py-2 mb-3" style="font-size: 0.9rem;">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ pedidoError }}
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-modal-cancelar" (click)="modalPaso = 'detalle'">Volver</button>
+          <button
+            class="btn-modal-pedir"
+            [disabled]="pedidoCargando || !pedidoFecha || pedidoCantidad <= 0"
+            (click)="enviarPedido()"
+          >
+            <span *ngIf="pedidoCargando" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!pedidoCargando" class="bi bi-check-circle-fill me-2"></i>
+            Confirmar Pedido
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 3: ÉXITO -->
+    <div class="modal-body-scroll text-center py-4" *ngIf="modalPaso === 'exito'">
+      <div class="success-icon-wrapper mb-3">
+        <i class="bi bi-check2-circle text-success" style="font-size: 4.5rem; line-height: 1;"></i>
+      </div>
+      <h3 class="fw-bold text-success mb-2">¡Pedido Registrado!</h3>
+      <p class="text-muted px-3">
+        Tu solicitud ha sido registrada correctamente. El agricultor ha sido notificado y el pedido se encuentra en estado <strong>PENDIENTE</strong> de aprobación.
+      </p>
+
+      <div class="card mx-auto bg-light border-0 rounded-3 p-3 mb-4" style="max-width: 400px; text-align: left; font-size: 0.9rem;">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Pedido ID:</span>
+          <span class="fw-bold">#{{ pedidoCreado?.id }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Producto:</span>
+          <span class="fw-bold">{{ loteSeleccionado.nombreProducto }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Cantidad:</span>
+          <span class="fw-bold">{{ pedidoCantidad }} {{ loteSeleccionado.unidadMedida }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Fecha requerida:</span>
+          <span class="fw-bold">{{ pedidoFecha }}</span>
+        </div>
+        <div class="d-flex justify-content-between border-top pt-2 mt-2">
+          <span class="fw-semibold">Total Estimado:</span>
+          <span class="fw-bold text-success">S/. {{ (pedidoCantidad * loteSeleccionado.precioUnitario) | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="d-flex flex-column gap-2 px-4">
+        <button class="btn btn-success rounded-pill py-2 fw-semibold" (click)="irAMisPedidos()">
+          <i class="bi bi-file-earmark-text me-2"></i>Ver Mis Pedidos
+        </button>
+        <button class="btn btn-outline-secondary rounded-pill py-2" (click)="cerrarModal()">
+          Seguir Comprando
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>

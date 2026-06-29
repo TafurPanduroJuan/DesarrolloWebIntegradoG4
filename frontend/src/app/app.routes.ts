@@ -11,6 +11,7 @@ import { adminGuard } from './shared/guards/admin.guard';
 import { IntranetRedirect } from './features/intranet/intranet-redirect';
 import { IntranetAgricultor } from './features/intranet/intranet-agricultor';
 import { IntranetAdmin } from './features/intranet/intranet-admin';
+import { IntranetComprador } from './features/intranet/intranet-comprador';
 
 export const routes: Routes = [
   { path: '',              component: Home },
@@ -23,5 +24,6 @@ export const routes: Routes = [
   // ── INTRANET ──────────────────────────────────────────
   { path: 'intranet',           component: IntranetRedirect,    canActivate: [authGuard] },
   { path: 'intranet/agricultor', component: IntranetAgricultor, canActivate: [authGuard] },
+  { path: 'intranet/comprador',  component: IntranetComprador,  canActivate: [authGuard] },
   { path: 'intranet/admin',      component: IntranetAdmin,      canActivate: [adminGuard] },
 ];

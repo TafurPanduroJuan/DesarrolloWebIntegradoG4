@@ -8,4 +8,5 @@ import com.AgroLink.ProyectoAngular.model.HistorialEstadoPedido;
 
 public interface HistorialEstadoPedidoRepository extends JpaRepository<HistorialEstadoPedido, Long> {
     List<HistorialEstadoPedido> findByPedidoId(Long pedidoId);
+    List<HistorialEstadoPedido> findByPedidoIdOrderByFechaCambioAsc(Long pedidoId);
 }

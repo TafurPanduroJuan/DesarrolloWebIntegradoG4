@@ -124,6 +124,16 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH,  "/api/lotes/*/cancelar").authenticated()
                 .requestMatchers(HttpMethod.GET,  "/api/movimientos-stock/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/movimientos-stock").hasRole("AGRICULTOR")
+
+                // -- RF07/RF08/RF12/RF18 - Pedidos ----------------------------
+                .requestMatchers(HttpMethod.POST,  "/api/pedidos").authenticated()
+                .requestMatchers(HttpMethod.GET,   "/api/pedidos/comprador/**").authenticated()
+                .requestMatchers(HttpMethod.GET,   "/api/pedidos/agricultor/**").hasRole("AGRICULTOR")
+                .requestMatchers(HttpMethod.PATCH, "/api/pedidos/*/confirmar").hasRole("AGRICULTOR")
+                .requestMatchers(HttpMethod.PATCH, "/api/pedidos/*/rechazar").hasRole("AGRICULTOR")
+                .requestMatchers(HttpMethod.PATCH, "/api/pedidos/*/estado").authenticated()
+                .requestMatchers(HttpMethod.GET,   "/api/pedidos/*/historial").authenticated()
+                .requestMatchers(HttpMethod.GET,   "/api/pedidos/**").authenticated()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

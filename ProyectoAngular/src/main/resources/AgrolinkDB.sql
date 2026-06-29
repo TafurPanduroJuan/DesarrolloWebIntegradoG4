@@ -271,7 +271,7 @@ CREATE TABLE IF NOT EXISTS pedido (
     total_estimado          DECIMAL(14,2),
 
     CONSTRAINT chk_estado_pedido CHECK (
-        estado IN ('PENDIENTE', 'CONFIRMADO', 'DESPACHADO', 'ENTREGADO', 'CANCELADO')
+        estado IN ('PENDIENTE', 'CONFIRMADO', 'PREPARADO', 'DESPACHADO', 'ENTREGADO', 'CANCELADO', 'RECHAZADO')
     )
 );
 
@@ -312,10 +312,10 @@ CREATE TABLE IF NOT EXISTS historial_estado_pedido (
 
     CONSTRAINT chk_estado_anterior_hist CHECK (
         estado_anterior IS NULL OR
-        estado_anterior IN ('PENDIENTE', 'CONFIRMADO', 'DESPACHADO', 'ENTREGADO', 'CANCELADO')
+        estado_anterior IN ('PENDIENTE', 'CONFIRMADO', 'PREPARADO', 'DESPACHADO', 'ENTREGADO', 'CANCELADO', 'RECHAZADO')
     ),
     CONSTRAINT chk_estado_nuevo_hist CHECK (
-        estado_nuevo IN ('PENDIENTE', 'CONFIRMADO', 'DESPACHADO', 'ENTREGADO', 'CANCELADO')
+        estado_nuevo IN ('PENDIENTE', 'CONFIRMADO', 'PREPARADO', 'DESPACHADO', 'ENTREGADO', 'CANCELADO', 'RECHAZADO')
     )
 );
 

@@ -40,6 +40,9 @@
       <button class="nav-item" [class.active]="seccionActiva() === 'perfil'" (click)="irA('perfil')">
         <span class="nav-icon">👤</span> Mi Perfil
       </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'pedidos'" (click)="irA('pedidos')">
+        <span class="nav-icon">🛒</span> Pedidos Recibidos
+      </button>
     </nav>
 
     <div class="sidebar-footer">
@@ -66,6 +69,7 @@
         <h1 *ngIf="seccionActiva() === 'lotes'">🏷️ Mis Lotes Comerciales</h1>
         <h1 *ngIf="seccionActiva() === 'nuevo-lote'">📤 Publicar Nuevo Lote</h1>
         <h1 *ngIf="seccionActiva() === 'perfil'">👤 Mi Perfil</h1>
+        <h1 *ngIf="seccionActiva() === 'pedidos'">🛒 Pedidos Recibidos</h1>
       </div>
       <div class="header-date">{{ usuario.email }}</div>
     </header>
@@ -784,6 +788,150 @@
       </div>
     </section>
 
+    <!-- ===== SECCIÓN: PEDIDOS RECIBIDOS (RF18) ===== -->
+    <section *ngIf="seccionActiva() === 'pedidos'" class="content-section animate-fade-in">
+      <div class="content-row">
+        <!-- LISTA DE PEDIDOS -->
+        <div class="list-panel" [style.flex]="pedidoDetalle ? '0 0 55%' : '1'">
+          <div *ngIf="pedidosRecibidos.length === 0" class="empty-state text-center py-5">
+            <span style="font-size: 3rem;">📥</span>
+            <p class="text-muted mt-3">No has recibido ninguna solicitud de pedido todavía.</p>
+          </div>
+
+          <div class="pedidos-list" *ngIf="pedidosRecibidos.length > 0">
+            <div
+              *ngFor="let p of pedidosRecibidos"
+              class="pedido-card"
+              [class.selected]="pedidoDetalle?.id === p.id"
+              (click)="verDetallePedido(p.id)"
+            >
+              <div class="pedido-card-header">
+                <span class="pedido-id">Pedido #{{ p.id }}</span>
+                <span class="badge-estado" [ngClass]="getPedidoEstadoClase(p.estado)">
+                  {{ getPedidoEstadoLabel(p.estado) }}
+                </span>
+              </div>
+              <div class="pedido-card-body" *ngIf="p.detalles && p.detalles.length > 0">
+                <div class="product-info-line">
+                  <span class="product-name fw-bold">{{ p.detalles[0].nombreProducto }}</span>
+                  <span class="product-qty text-muted">{{ p.detalles[0].cantidadSolicitada }} {{ p.detalles[0].unidadMedida }}</span>
+                </div>
+                <div class="date-line text-muted">
+                  Fecha: {{ p.fechaPedido | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+              </div>
+              <div class="pedido-card-footer">
+                <span class="text-muted">Total Estimado:</span>
+                <span class="total-val">S/. {{ p.totalEstimado | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DETALLE DEL PEDIDO -->
+        <div class="detail-panel" *ngIf="pedidoDetalle" style="flex: 0 0 42%; background: white; padding: 20px; border-radius: 12px; border: 1px solid #e8ede8;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0 fw-bold">Pedido #{{ pedidoDetalle.id }}</h4>
+            <button class="btn btn-sm btn-outline-secondary" (click)="cerrarDetallePedido()">Cerrar</button>
+          </div>
+
+          <div class="mb-4">
+            <h5 class="section-title"><i class="bi bi-info-circle-fill me-2"></i>Información del Pedido</h5>
+            <div class="info-grid mt-2">
+              <div class="info-item">
+                <span class="info-label">Comprador ID</span>
+                <span class="info-val">{{ pedidoDetalle.compradorId }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Fecha del Pedido</span>
+                <span class="info-val">{{ pedidoDetalle.fechaPedido | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Fecha Requerida</span>
+                <span class="info-val">{{ pedidoDetalle.fechaEntregaEstimada }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Total del Pedido</span>
+                <span class="info-val text-success fw-bold">S/. {{ pedidoDetalle.totalEstimado | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Observaciones especiales (RF12) -->
+          <div class="mb-4">
+            <h5 class="section-title"><i class="bi bi-chat-left-text-fill me-2"></i>Notas del Comprador</h5>
+            <div class="card p-3 bg-light border-0 rounded-3 mt-2">
+              <p class="mb-0 text-muted" *ngIf="!pedidoDetalle.notasEspeciales">El comprador no especificó notas especiales.</p>
+              <p class="mb-0 text-dark" style="white-space: pre-line;" *ngIf="pedidoDetalle.notasEspeciales">{{ pedidoDetalle.notasEspeciales }}</p>
+            </div>
+          </div>
+
+          <!-- Acciones del Agricultor (RF18) -->
+          <div class="mb-4">
+            <h5 class="section-title"><i class="bi bi-gear-fill me-2"></i>Acciones de Estado</h5>
+            
+            <!-- PENDIENTE: Aceptar / Rechazar -->
+            <div *ngIf="pedidoDetalle.estado === 'PENDIENTE'" class="d-flex flex-column gap-2 mt-2">
+              <button class="btn btn-success w-100 rounded-pill py-2" (click)="confirmarPedido(pedidoDetalle.id)">
+                <i class="bi bi-check-circle-fill me-2"></i>Confirmar Pedido (Aceptar)
+              </button>
+              
+              <div class="border-top pt-2 mt-2">
+                <label class="form-label fw-bold">Motivo de Rechazo *</label>
+                <textarea class="form-control mb-2" rows="2" [(ngModel)]="motivoRechazo" placeholder="Especifique el motivo por el cual rechaza el pedido..."></textarea>
+                <button class="btn btn-danger w-100 rounded-pill py-2" (click)="rechazarPedido(pedidoDetalle.id)">
+                  <i class="bi bi-x-circle-fill me-2"></i>Rechazar Pedido
+                </button>
+              </div>
+            </div>
+
+            <!-- CONFIRMADO -> PREPARADO -->
+            <div *ngIf="pedidoDetalle.estado === 'CONFIRMADO'" class="mt-2">
+              <button class="btn btn-primary w-100 rounded-pill py-2" (click)="avanzarEstado(pedidoDetalle.id, 'PREPARADO')">
+                📦 Marcar como Preparado
+              </button>
+            </div>
+
+            <!-- PREPARADO -> DESPACHADO -->
+            <div *ngIf="pedidoDetalle.estado === 'PREPARADO'" class="mt-2">
+              <button class="btn btn-primary w-100 rounded-pill py-2" (click)="avanzarEstado(pedidoDetalle.id, 'DESPACHADO')">
+                🚚 Marcar como Despachado
+              </button>
+            </div>
+
+            <!-- DESPACHADO -> ENTREGADO -->
+            <div *ngIf="pedidoDetalle.estado === 'DESPACHADO'" class="mt-2">
+              <button class="btn btn-success w-100 rounded-pill py-2" (click)="avanzarEstado(pedidoDetalle.id, 'ENTREGADO')">
+                🏁 Marcar como Entregado
+              </button>
+            </div>
+
+            <!-- CANCELADO / RECHAZADO / ENTREGADO -->
+            <div *ngIf="['ENTREGADO', 'CANCELADO', 'RECHAZADO'].includes(pedidoDetalle.estado)" class="mt-2 text-center text-muted">
+              <em>Este pedido se encuentra en un estado final ({{ getPedidoEstadoLabel(pedidoDetalle.estado) }}).</em>
+            </div>
+          </div>
+
+          <!-- Timeline -->
+          <div class="mb-4">
+            <h5 class="section-title"><i class="bi bi-clock-history me-2"></i>Historial de Estados</h5>
+            <div class="timeline mt-3" style="position: relative; padding-left: 20px;">
+              <div style="position: absolute; left: 5px; top: 5px; bottom: 5px; width: 2px; background: #e2e8f0;"></div>
+              <div class="timeline-item" *ngFor="let h of pedidoDetalle.historial" style="position: relative; padding-bottom: 20px;">
+                <div class="timeline-marker" [ngClass]="getPedidoEstadoClase(h.estadoNuevo)" style="position: absolute; left: -20px; top: 5px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; z-index: 1;"></div>
+                <div class="timeline-content" style="background: #f8fafc; border-radius: 8px; padding: 8px 12px; border: 1px solid #f1f5f9; font-size: 0.85rem;">
+                  <div class="d-flex justify-content-between">
+                    <strong class="text-dark">{{ getPedidoEstadoLabel(h.estadoNuevo) }}</strong>
+                    <span class="text-muted" style="font-size: 0.72rem;">{{ h.fechaCambio | date:'dd/MM HH:mm' }}</span>
+                  </div>
+                  <p class="mb-0 text-muted mt-1" style="font-size: 0.78rem;">{{ h.observacion }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
   </main>
 </div>

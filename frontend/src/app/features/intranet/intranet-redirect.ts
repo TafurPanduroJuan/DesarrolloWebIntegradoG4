@@ -21,6 +21,8 @@ export class IntranetRedirect implements OnInit {
       this.router.navigate(['/intranet/admin']);
     } else if (this.auth.getUsuarioActual()?.rol === 'AGRICULTOR') {
       this.router.navigate(['/intranet/agricultor']);
+    } else if (this.auth.getUsuarioActual()?.rol === 'COMPRADOR') {
+      this.router.navigate(['/intranet/comprador']);
     } else {
       this.router.navigate(['/']);
     }

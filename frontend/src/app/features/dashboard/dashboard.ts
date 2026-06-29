@@ -19,6 +19,8 @@ export class Dashboard implements OnInit {
     this.usuario = this.auth.getUsuarioActual();
     if (!this.usuario) {
       this.router.navigate(['/login']);
+    } else {
+      this.router.navigate(['/intranet']);
     }
   }
 

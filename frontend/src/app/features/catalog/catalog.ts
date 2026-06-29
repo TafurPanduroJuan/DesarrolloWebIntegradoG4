@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
+import { Auth } from '../auth/services/auth';
+import { PedidoService, PedidoResponse } from '../intranet/pedido.service';
 
 import {
   LoteService,
@@ -46,7 +48,21 @@ export class Catalog implements OnInit {
     PRIMERA: '1.ª Calidad', SEGUNDA: '2.ª Calidad', TERCERA: '3.ª Calidad'
   };
 
-  constructor(private loteService: LoteService) {}
+  // ── RF07: Formulario de pedido en modal (paso 2) ──
+  modalPaso: 'detalle' | 'pedido' | 'exito' = 'detalle';
+  pedidoCantidad = 1;
+  pedidoFecha = '';
+  pedidoNotas = '';
+  pedidoError = '';
+  pedidoCargando = false;
+  pedidoCreado: PedidoResponse | null = null;
+
+  constructor(
+    private loteService: LoteService,
+    private auth: Auth,
+    private pedidoService: PedidoService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.cargarCatalogo();
@@ -106,12 +122,90 @@ export class Catalog implements OnInit {
   // ── Modal ─────────────────────────────────────────────────────
   abrirModal(lote: LoteCatalogo): void {
     this.loteSeleccionado = lote;
+    this.modalPaso = 'detalle';
+    this.pedidoCantidad = 1;
+    this.pedidoFecha = '';
+    this.pedidoNotas = '';
+    this.pedidoError = '';
+    this.pedidoCreado = null;
     document.body.style.overflow = 'hidden';
   }
 
   cerrarModal(): void {
     this.loteSeleccionado = null;
     document.body.style.overflow = '';
+  }
+
+  // ── Flujo de Pedidos (RF07) ──
+  iniciarPedido(): void {
+    if (!this.auth.isLoggedIn()) {
+      this.cerrarModal();
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/catalog' } });
+      return;
+    }
+    this.modalPaso = 'pedido';
+    // Poner por defecto fecha de entrega estimada del lote si está en el formato correcto
+    if (this.loteSeleccionado?.fechaEntregaEstimada) {
+      this.pedidoFecha = this.loteSeleccionado.fechaEntregaEstimada;
+    } else {
+      const mañana = new Date();
+      mañana.setDate(mañana.getDate() + 1);
+      this.pedidoFecha = mañana.toISOString().split('T')[0];
+    }
+  }
+
+  enviarPedido(): void {
+    if (!this.loteSeleccionado) return;
+    this.pedidoError = '';
+
+    if (this.pedidoCantidad <= 0) {
+      this.pedidoError = 'La cantidad debe ser mayor a 0.';
+      return;
+    }
+
+    if (this.pedidoCantidad > this.loteSeleccionado.stockDisponible) {
+      this.pedidoError = `La cantidad no puede superar el stock disponible (${this.loteSeleccionado.stockDisponible} ${this.loteSeleccionado.unidadMedida}).`;
+      return;
+    }
+
+    if (!this.pedidoFecha) {
+      this.pedidoError = 'Debe especificar una fecha de entrega.';
+      return;
+    }
+
+    const usuario = this.auth.getUsuarioActual();
+    if (!usuario) {
+      this.pedidoError = 'Sesión no válida. Por favor, inicia sesión de nuevo.';
+      return;
+    }
+
+    this.pedidoCargando = true;
+    const req = {
+      compradorId: usuario.id,
+      loteId: this.loteSeleccionado.loteId,
+      cantidadSolicitada: this.pedidoCantidad,
+      fechaEntregaDeseada: this.pedidoFecha,
+      notasEspeciales: this.pedidoNotas
+    };
+
+    this.pedidoService.crearPedido(req).subscribe({
+      next: (res) => {
+        this.pedidoCargando = false;
+        this.pedidoCreado = res;
+        this.modalPaso = 'exito';
+        // Recargar catálogo para actualizar el stock visible
+        this.cargarCatalogo();
+      },
+      error: (err) => {
+        this.pedidoCargando = false;
+        this.pedidoError = err.error?.error || 'Error al procesar el pedido. Intente nuevamente.';
+      }
+    });
+  }
+
+  irAMisPedidos(): void {
+    this.cerrarModal();
+    this.router.navigate(['/intranet/comprador']);
   }
 
   // ── Helpers UI ────────────────────────────────────────────────

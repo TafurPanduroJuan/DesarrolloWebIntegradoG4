@@ -21,6 +21,7 @@ import {
   CalidadLote,
   TipoMovimiento
 } from './lote.service';
+import { PedidoService, PedidoResponse, EstadoPedido } from './pedido.service';
 
 @Component({
   selector: 'app-intranet-agricultor',
@@ -144,11 +145,17 @@ export class IntranetAgricultor implements OnInit {
   calidadOpciones: CalidadLote[] = ['PRIMERA', 'SEGUNDA', 'TERCERA'];
   movimientoOpciones: TipoMovimiento[] = ['ENTRADA', 'SALIDA', 'AJUSTE'];
 
+  // ── RF18: Gestión de pedidos recibidos ──
+  pedidosRecibidos: PedidoResponse[] = [];
+  pedidoDetalle: PedidoResponse | null = null;
+  motivoRechazo: string = '';
+
   constructor(
     private auth: Auth,
     private cultivoService: CultivoService,
     private lotes: LoteService,
-    private router: Router
+    private router: Router,
+    private pedidoService: PedidoService
   ) {}
 
   ngOnInit() {
@@ -168,6 +175,7 @@ export class IntranetAgricultor implements OnInit {
       error: () => { this.misCultivos = []; }
     });
     this.cargarLotes();
+    this.cargarPedidosRecibidos();
   }
 
   cargarLotes() {
@@ -482,5 +490,90 @@ export class IntranetAgricultor implements OnInit {
     });
   }
 
+  // ── Métodos de Pedidos (RF18) ──
+  cargarPedidosRecibidos(): void {
+    if (!this.usuario) return;
+    this.pedidoService.listarPorAgricultor(this.usuario.id).subscribe({
+      next: (data) => {
+        this.pedidosRecibidos = data.sort((a, b) => new Date(b.fechaPedido).getTime() - new Date(a.fechaPedido).getTime());
+      },
+      error: () => {
+        this.pedidosRecibidos = [];
+      }
+    });
+  }
 
+  confirmarPedido(pedidoId: number): void {
+    if (!this.usuario) return;
+    this.pedidoService.confirmarPedido(pedidoId, this.usuario.id).subscribe({
+      next: () => {
+        this.cargarPedidosRecibidos();
+        if (this.pedidoDetalle?.id === pedidoId) {
+          this.verDetallePedido(pedidoId);
+        }
+        alert('¡Pedido confirmado exitosamente!');
+      },
+      error: (err) => alert(err.error?.error || 'Error al confirmar el pedido.')
+    });
+  }
+
+  rechazarPedido(pedidoId: number): void {
+    if (!this.usuario) return;
+    if (!this.motivoRechazo.trim()) {
+      alert('Por favor ingrese un motivo de rechazo.');
+      return;
+    }
+    this.pedidoService.rechazarPedido(pedidoId, this.usuario.id, this.motivoRechazo).subscribe({
+      next: () => {
+        this.motivoRechazo = '';
+        this.cargarPedidosRecibidos();
+        if (this.pedidoDetalle?.id === pedidoId) {
+          this.verDetallePedido(pedidoId);
+        }
+        alert('Pedido rechazado.');
+      },
+      error: (err) => alert(err.error?.error || 'Error al rechazar el pedido.')
+    });
+  }
+
+  avanzarEstado(pedidoId: number, nuevoEstado: string): void {
+    this.pedidoService.cambiarEstado(pedidoId, nuevoEstado as any, `Pedido actualizado a ${nuevoEstado.toLowerCase()} por el agricultor.`).subscribe({
+      next: () => {
+        this.cargarPedidosRecibidos();
+        if (this.pedidoDetalle?.id === pedidoId) {
+          this.verDetallePedido(pedidoId);
+        }
+      },
+      error: (err) => alert(err.error?.error || 'Error al actualizar el pedido.')
+    });
+  }
+
+  verDetallePedido(pedidoId: number): void {
+    this.pedidoService.obtenerPedido(pedidoId).subscribe({
+      next: (data) => {
+        this.pedidoDetalle = data;
+      }
+    });
+  }
+
+  cerrarDetallePedido(): void {
+    this.pedidoDetalle = null;
+  }
+
+  getPedidoEstadoLabel(estado: string): string {
+    const labels: Record<string, string> = {
+      PENDIENTE: 'Pendiente',
+      CONFIRMADO: 'Confirmado',
+      PREPARADO: 'Preparado',
+      DESPACHADO: 'Despachado',
+      ENTREGADO: 'Entregado',
+      CANCELADO: 'Cancelado',
+      RECHAZADO: 'Rechazado'
+    };
+    return labels[estado] || estado;
+  }
+
+  getPedidoEstadoClase(estado: string): string {
+    return 'badge-estado-' + estado.toLowerCase();
+  }
 }
