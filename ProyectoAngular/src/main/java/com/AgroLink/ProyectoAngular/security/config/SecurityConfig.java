@@ -108,8 +108,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/eventos-produccion/**").hasRole("AGRICULTOR")
 
                 // ── RF04 / RF09 – Lotes comerciales ────────────────────────
+                // IMPORTANTE: las rutas específicas públicas deben ir ANTES del comodín /**
+                // También se permite OPTIONS para el preflight de CORS
+                .requestMatchers(HttpMethod.OPTIONS, "/api/lotes/publicados/buscar").permitAll()
                 .requestMatchers(HttpMethod.GET,    "/api/lotes/publicados").permitAll()
                 .requestMatchers(HttpMethod.GET,    "/api/lotes/publicados/buscar").permitAll()
+                // El comodín /** va después para no bloquear las rutas públicas anteriores
                 .requestMatchers(HttpMethod.GET,    "/api/lotes/**").authenticated()
                 .requestMatchers(HttpMethod.POST,   "/api/lotes/publicar").hasRole("AGRICULTOR")
                 .requestMatchers(HttpMethod.POST,   "/api/lotes").hasRole("AGRICULTOR")
