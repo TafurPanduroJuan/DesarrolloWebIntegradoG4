@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Auth, UsuarioSesion } from '../auth/services/auth';
 import { PedidoService, PedidoResponse, EstadoPedido } from './pedido.service';
+import { DatosContactoService, ContactoPedido } from './datos-contacto.service';
 
 @Component({
   selector: 'app-intranet-comprador',
@@ -20,9 +21,15 @@ export class IntranetComprador implements OnInit {
   error = '';
   filtroEstado = 'TODOS';
 
+  // ── RF11: Contacto del agricultor, visible solo si el pedido está confirmado ──
+  contactoAgricultor: ContactoPedido | null = null;
+  cargandoContacto = false;
+  errorContacto = '';
+
   constructor(
     private auth: Auth,
     private pedidoService: PedidoService,
+    private datosContactoService: DatosContactoService,
     private router: Router
   ) {}
 
@@ -67,10 +74,38 @@ export class IntranetComprador implements OnInit {
 
   seleccionarPedido(pedido: PedidoResponse): void {
     this.pedidoSeleccionado = pedido;
+    this.cargarContactoAgricultor(pedido);
+  }
+
+  // ── RF11: solo se intenta mostrar el contacto si el pedido ya fue
+  // confirmado por el agricultor (o etapas posteriores); el backend
+  // vuelve a validar esta regla de todos modos.
+  cargarContactoAgricultor(pedido: PedidoResponse): void {
+    this.contactoAgricultor = null;
+    this.errorContacto = '';
+
+    const estadosAutorizados: EstadoPedido[] = ['CONFIRMADO', 'PREPARADO', 'DESPACHADO', 'ENTREGADO'];
+    if (!this.usuario || !estadosAutorizados.includes(pedido.estado)) {
+      return;
+    }
+
+    this.cargandoContacto = true;
+    this.datosContactoService.obtenerContactoPorPedido(pedido.id, this.usuario.id).subscribe({
+      next: (data) => {
+        this.contactoAgricultor = data;
+        this.cargandoContacto = false;
+      },
+      error: (err) => {
+        this.errorContacto = err.error?.error || 'No se pudo obtener el contacto del agricultor.';
+        this.cargandoContacto = false;
+      }
+    });
   }
 
   cerrarDetalle(): void {
     this.pedidoSeleccionado = null;
+    this.contactoAgricultor = null;
+    this.errorContacto = '';
   }
 
   cancelarPedido(pedidoId: number): void {

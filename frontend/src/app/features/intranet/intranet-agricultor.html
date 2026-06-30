@@ -175,8 +175,9 @@
               <input type="number" class="form-input" name="areaHa" [(ngModel)]="formLote.areaHa" required min="0.01" step="0.01" placeholder="Ej: 2.5">
             </div>
             <div class="form-group">
-              <label class="form-label">Ubicación</label>
+              <label class="form-label">Ubicación referencial</label>
               <input type="text" class="form-input" name="ubicacion" [(ngModel)]="formLote.ubicacion" required placeholder="Ej: Cajamarca, sector Los Alisos">
+              <small class="text-muted">Solo distrito/zona aproximada, sin coordenadas GPS exactas.</small>
             </div>
             <div class="form-group">
               <label class="form-label">Estado productivo</label>
@@ -424,8 +425,9 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">Ubicación <span class="req">*</span></label>
+              <label class="form-label">Ubicación referencial <span class="req">*</span></label>
               <input type="text" class="form-input" name="ubicacion" [(ngModel)]="formCultivo.ubicacion" required placeholder="Ej: Cajamarca, sector Los Alisos">
+              <small class="text-muted">Indica distrito/zona aproximada (no se usa GPS en tiempo real). Solo sirve para que el comprador estime la distancia.</small>
             </div>
 
             <div class="form-group">
@@ -863,6 +865,45 @@
             <div class="card p-3 bg-light border-0 rounded-3 mt-2">
               <p class="mb-0 text-muted" *ngIf="!pedidoDetalle.notasEspeciales">El comprador no especificó notas especiales.</p>
               <p class="mb-0 text-dark" style="white-space: pre-line;" *ngIf="pedidoDetalle.notasEspeciales">{{ pedidoDetalle.notasEspeciales }}</p>
+            </div>
+          </div>
+
+          <!-- RF11: Datos de contacto del comprador — solo visibles si el pedido está confirmado o en etapas posteriores -->
+          <div class="mb-4">
+            <h5 class="section-title"><i class="bi bi-person-lines-fill me-2"></i>Contacto del Comprador</h5>
+
+            <div class="card p-3 bg-light border-0 rounded-3 mt-2" *ngIf="!['CONFIRMADO','PREPARADO','DESPACHADO','ENTREGADO'].includes(pedidoDetalle.estado)">
+              <p class="mb-0 text-muted">
+                <i class="bi bi-lock-fill me-1"></i>
+                Los datos de contacto se habilitan al confirmar este pedido.
+              </p>
+            </div>
+
+            <div class="card p-3 bg-light border-0 rounded-3 mt-2" *ngIf="['CONFIRMADO','PREPARADO','DESPACHADO','ENTREGADO'].includes(pedidoDetalle.estado)">
+              <p class="mb-0 text-muted" *ngIf="cargandoContacto">Cargando datos de contacto...</p>
+              <p class="mb-0 text-danger" *ngIf="!cargandoContacto && errorContacto">{{ errorContacto }}</p>
+
+              <div *ngIf="!cargandoContacto && contactoComprador">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Nombre:</span>
+                  <span class="fw-bold">{{ contactoComprador.nombreUsuario }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" *ngIf="contactoComprador.emailContacto">
+                  <span class="text-muted">Email:</span>
+                  <span class="fw-bold">{{ contactoComprador.emailContacto }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" *ngIf="contactoComprador.telefonoAdicional">
+                  <span class="text-muted">Teléfono:</span>
+                  <span class="fw-bold">{{ contactoComprador.telefonoAdicional }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" *ngIf="contactoComprador.direccion">
+                  <span class="text-muted">Dirección referencial:</span>
+                  <span class="fw-bold text-end">{{ contactoComprador.direccion }}</span>
+                </div>
+                <p class="mb-0 text-muted small mt-2" *ngIf="contactoComprador.referencia">
+                  <i class="bi bi-signpost-2 me-1"></i>{{ contactoComprador.referencia }}
+                </p>
+              </div>
             </div>
           </div>
 

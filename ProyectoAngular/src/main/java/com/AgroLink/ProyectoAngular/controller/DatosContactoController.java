@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.AgroLink.ProyectoAngular.dto.ContactoPedidoResponse;
 import com.AgroLink.ProyectoAngular.model.DatosContacto;
 import com.AgroLink.ProyectoAngular.service.DatosContactoService;
 
@@ -49,5 +50,26 @@ public class DatosContactoController {
         if (datosContactoService.buscarPorId(id) == null) return ResponseEntity.notFound().build();
         datosContactoService.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * RF11 — Devuelve el contacto de la contraparte de un pedido, solo si el
+     * pedido existe, el solicitante es una de las dos partes, y el pedido
+     * está en un estado de coordinación autorizada (confirmado en adelante).
+     *
+     * GET /api/datos-contacto/pedido/{pedidoId}?solicitanteId=123
+     */
+    @GetMapping("/pedido/{pedidoId}")
+    public ResponseEntity<?> obtenerContactoPorPedido(
+            @PathVariable Long pedidoId,
+            @RequestParam Long solicitanteId) {
+        try {
+            ContactoPedidoResponse contacto = datosContactoService.obtenerContactoAutorizado(pedidoId, solicitanteId);
+            return ResponseEntity.ok(contacto);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(java.util.Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
     }
 }

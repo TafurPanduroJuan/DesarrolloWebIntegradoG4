@@ -22,6 +22,7 @@ import {
   TipoMovimiento
 } from './lote.service';
 import { PedidoService, PedidoResponse, EstadoPedido } from './pedido.service';
+import { DatosContactoService, ContactoPedido } from './datos-contacto.service';
 
 @Component({
   selector: 'app-intranet-agricultor',
@@ -150,12 +151,18 @@ export class IntranetAgricultor implements OnInit {
   pedidoDetalle: PedidoResponse | null = null;
   motivoRechazo: string = '';
 
+  // ── RF11: Contacto del comprador, visible solo si el pedido está confirmado ──
+  contactoComprador: ContactoPedido | null = null;
+  cargandoContacto = false;
+  errorContacto = '';
+
   constructor(
     private auth: Auth,
     private cultivoService: CultivoService,
     private lotes: LoteService,
     private router: Router,
-    private pedidoService: PedidoService
+    private pedidoService: PedidoService,
+    private datosContactoService: DatosContactoService
   ) {}
 
   ngOnInit() {
@@ -552,12 +559,40 @@ export class IntranetAgricultor implements OnInit {
     this.pedidoService.obtenerPedido(pedidoId).subscribe({
       next: (data) => {
         this.pedidoDetalle = data;
+        this.cargarContactoComprador(data);
+      }
+    });
+  }
+
+  // ── RF11: solo se intenta mostrar el contacto si el pedido ya está
+  // confirmado por el propio agricultor (o etapas posteriores); el
+  // backend vuelve a validar esta regla de todos modos.
+  cargarContactoComprador(pedido: PedidoResponse): void {
+    this.contactoComprador = null;
+    this.errorContacto = '';
+
+    const estadosAutorizados: EstadoPedido[] = ['CONFIRMADO', 'PREPARADO', 'DESPACHADO', 'ENTREGADO'];
+    if (!this.usuario || !estadosAutorizados.includes(pedido.estado)) {
+      return;
+    }
+
+    this.cargandoContacto = true;
+    this.datosContactoService.obtenerContactoPorPedido(pedido.id, this.usuario.id).subscribe({
+      next: (data) => {
+        this.contactoComprador = data;
+        this.cargandoContacto = false;
+      },
+      error: (err) => {
+        this.errorContacto = err.error?.error || 'No se pudo obtener el contacto del comprador.';
+        this.cargandoContacto = false;
       }
     });
   }
 
   cerrarDetallePedido(): void {
     this.pedidoDetalle = null;
+    this.contactoComprador = null;
+    this.errorContacto = '';
   }
 
   getPedidoEstadoLabel(estado: string): string {

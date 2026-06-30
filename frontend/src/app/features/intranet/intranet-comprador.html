@@ -218,6 +218,45 @@
             </div>
           </div>
 
+          <!-- RF11: Datos de contacto del agricultor — solo visibles si el pedido está confirmado o en etapas posteriores -->
+          <div class="detail-section mb-4">
+            <h5 class="section-title"><i class="bi bi-person-lines-fill me-2"></i>Contacto del Agricultor</h5>
+
+            <div class="card p-3 border rounded-3 bg-light mt-2" *ngIf="!['CONFIRMADO','PREPARADO','DESPACHADO','ENTREGADO'].includes(pedidoSeleccionado.estado)">
+              <p class="mb-0 text-muted">
+                <i class="bi bi-lock-fill me-1"></i>
+                Los datos de contacto se habilitan cuando el agricultor confirme este pedido.
+              </p>
+            </div>
+
+            <div class="card p-3 border rounded-3 bg-light mt-2" *ngIf="['CONFIRMADO','PREPARADO','DESPACHADO','ENTREGADO'].includes(pedidoSeleccionado.estado)">
+              <p class="mb-0 text-muted" *ngIf="cargandoContacto">Cargando datos de contacto...</p>
+              <p class="mb-0 text-danger" *ngIf="!cargandoContacto && errorContacto">{{ errorContacto }}</p>
+
+              <div *ngIf="!cargandoContacto && contactoAgricultor">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Nombre:</span>
+                  <span class="fw-bold">{{ contactoAgricultor.nombreUsuario }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" *ngIf="contactoAgricultor.emailContacto">
+                  <span class="text-muted">Email:</span>
+                  <span class="fw-bold">{{ contactoAgricultor.emailContacto }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" *ngIf="contactoAgricultor.telefonoAdicional">
+                  <span class="text-muted">Teléfono:</span>
+                  <span class="fw-bold">{{ contactoAgricultor.telefonoAdicional }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" *ngIf="contactoAgricultor.direccion">
+                  <span class="text-muted">Dirección referencial:</span>
+                  <span class="fw-bold text-end">{{ contactoAgricultor.direccion }}</span>
+                </div>
+                <p class="mb-0 text-muted small mt-2" *ngIf="contactoAgricultor.referencia">
+                  <i class="bi bi-signpost-2 me-1"></i>{{ contactoAgricultor.referencia }}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- Historial de estados / Timeline (RF08) -->
           <div class="detail-section mb-4">
             <h5 class="section-title"><i class="bi bi-clock-history me-2"></i>Línea de Tiempo del Pedido</h5>
