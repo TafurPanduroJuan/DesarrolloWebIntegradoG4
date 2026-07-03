@@ -14,12 +14,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * RF02  - Registro de cultivos
- * RF03  - Seguimiento de producciÃƒÂ³n (estado, etapa, observaciÃƒÂ³n)
- * RF16  - GestiÃƒÂ³n de lotes agrÃƒÂ­colas vinculados al cultivo
- * RF17  - GestiÃƒÂ³n de eventos de producciÃƒÂ³n
- */
 @Service
 public class CultivoService {
 
@@ -29,7 +23,7 @@ public class CultivoService {
     @Autowired
     private EventoProduccionRepository eventoProduccionRepository;
 
-    // ---- RF02 / RF16: CRUD Cultivos ----
+ 
     @Transactional
     public Cultivo crear(Cultivo cultivo) {
         if (cultivo.getEstado() == null) {
@@ -42,12 +36,27 @@ public class CultivoService {
     public Cultivo actualizar(Long id, Cultivo datos) {
         Cultivo existing = cultivoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Cultivo no encontrado: " + id));
-        datos.setId(id);
-        datos.setFechaCreacion(existing.getFechaCreacion());
-        return cultivoRepository.save(datos);
+
+        
+        if (datos.getAgricultorId() != null) existing.setAgricultorId(datos.getAgricultorId());
+        if (datos.getNombreProducto() != null && !datos.getNombreProducto().isBlank())
+            existing.setNombreProducto(datos.getNombreProducto());
+        if (datos.getVariedad() != null) existing.setVariedad(datos.getVariedad());
+        if (datos.getCategoria() != null) existing.setCategoria(datos.getCategoria());
+        if (datos.getNombreLote() != null) existing.setNombreLote(datos.getNombreLote());
+        if (datos.getAreaHa() != null) existing.setAreaHa(datos.getAreaHa());
+        if (datos.getUbicacion() != null) existing.setUbicacion(datos.getUbicacion());
+        if (datos.getDescripcion() != null) existing.setDescripcion(datos.getDescripcion());
+        if (datos.getFechaSiembra() != null) existing.setFechaSiembra(datos.getFechaSiembra());
+        if (datos.getFechaCosechaEstimada() != null) existing.setFechaCosechaEstimada(datos.getFechaCosechaEstimada());
+        if (datos.getEstado() != null) existing.setEstado(datos.getEstado());
+        if (datos.getEtapaProductiva() != null) existing.setEtapaProductiva(datos.getEtapaProductiva());
+        if (datos.getObservacionSeguimiento() != null) existing.setObservacionSeguimiento(datos.getObservacionSeguimiento());
+
+        return cultivoRepository.save(existing);
     }
 
-    // ---- RF03: Seguimiento de producciÃƒÂ³n ----
+
     @Transactional
     public Cultivo actualizarSeguimiento(Long id, SeguimientoRequest req) {
         Cultivo cultivo = cultivoRepository.findById(id)
@@ -79,10 +88,10 @@ public class CultivoService {
         cultivoRepository.deleteById(id);
     }
 
-    // ---- RF17: Eventos de producciÃƒÂ³n ----
+
     @Transactional
     public EventoProduccion registrarEvento(EventoProduccion evento) {
-        // validar que existe el cultivo
+    
         cultivoRepository.findById(evento.getCultivoId())
                 .orElseThrow(() -> new IllegalArgumentException("Cultivo no encontrado: " + evento.getCultivoId()));
         if (evento.getFecha() == null) evento.setFecha(LocalDate.now());

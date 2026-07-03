@@ -29,7 +29,7 @@ public class LotePublicacionRequest {
     private String unidadMedida;
 
     @NotNull(message = "La fecha de entrega estimada es obligatoria")
-    @Future(message = "La fecha de entrega debe ser futura")
+    @FutureOrPresent(message = "La fecha de entrega no puede ser una fecha pasada")
     private LocalDate fechaEntregaEstimada;
 
     private String condicionesEntrega;
