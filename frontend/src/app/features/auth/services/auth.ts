@@ -35,20 +35,6 @@ export interface RegisterRequest {
   tipoComprador?: string;
 }
 
-export interface ProductoAgrolink {
-  id: string;
-  agricultorId: string;
-  agricultorNombre: string;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  categoria: string;
-  unidad: string;
-  stock: number;
-  estado: 'pendiente' | 'aprobado' | 'rechazado';
-  fecha: string;
-}
-
 @Injectable({
   providedIn: 'root',
 })
@@ -56,7 +42,6 @@ export class Auth {
   private readonly API_URL = `${environment.apiUrl}/auth`;
   private readonly TOKEN_KEY = 'agrolink_token';
   private readonly SESSION_KEY = 'agrolink_sesion';
-  private readonly PRODUCTOS_KEY = 'agrolink_productos';
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -105,38 +90,5 @@ export class Auth {
 
   hasRole(rol: RolUsuario): boolean {
     return this.getUsuarioActual()?.rol === rol;
-  }
-
-  // Productos siguen en mock por ahora (no hay backend para esto aÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºn)
-  getProductos(): ProductoAgrolink[] {
-    return JSON.parse(localStorage.getItem(this.PRODUCTOS_KEY) || '[]');
-  }
-
-  getProductosPorAgricultor(agricultorId: string): ProductoAgrolink[] {
-    return this.getProductos().filter(p => p.agricultorId === agricultorId);
-  }
-
-  subirProducto(producto: Omit<ProductoAgrolink, 'id' | 'estado' | 'fecha' | 'agricultorId' | 'agricultorNombre'>): void {
-    const usuario = this.getUsuarioActual();
-    if (!usuario) return;
-    const productos = this.getProductos();
-    productos.push({
-      ...producto,
-      id: crypto.randomUUID(),
-      agricultorId: String(usuario.id),
-      agricultorNombre: usuario.nombre,
-      estado: 'pendiente',
-      fecha: new Date().toISOString().split('T')[0]
-    });
-    localStorage.setItem(this.PRODUCTOS_KEY, JSON.stringify(productos));
-  }
-
-  actualizarEstadoProducto(id: string, nuevoEstado: 'aprobado' | 'rechazado'): void {
-    const productos = this.getProductos();
-    const p = productos.find(x => x.id === id);
-    if (p) {
-      p.estado = nuevoEstado;
-      localStorage.setItem(this.PRODUCTOS_KEY, JSON.stringify(productos));
-    }
   }
 }

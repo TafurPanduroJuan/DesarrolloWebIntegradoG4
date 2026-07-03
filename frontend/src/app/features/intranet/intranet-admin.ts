@@ -3,7 +3,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Auth, UsuarioSesion, ProductoAgrolink } from '../auth/services/auth';
+import { Auth, UsuarioSesion } from '../auth/services/auth';
 
 export interface UsuarioAdmin {
   id: number;
@@ -27,7 +27,6 @@ export class IntranetAdmin implements OnInit {
   seccionActiva = signal<string>('resumen');
 
   usuarios: UsuarioAdmin[] = [];
-  productos: ProductoAgrolink[] = [];
 
   private readonly API = environment.apiUrl;
 
@@ -51,7 +50,6 @@ export class IntranetAdmin implements OnInit {
       next: (data) => this.usuarios = data,
       error: () => this.usuarios = []
     });
-    this.productos = this.auth.getProductos();
   }
 
   irA(seccion: string) { this.seccionActiva.set(seccion); }
@@ -80,29 +78,9 @@ export class IntranetAdmin implements OnInit {
       .subscribe(() => this.cargarDatos());
   }
 
-  aprobarProducto(id: string) {
-    this.auth.actualizarEstadoProducto(id, 'aprobado');
-    this.productos = this.auth.getProductos();
-  }
-
-  rechazarProducto(id: string) {
-    this.auth.actualizarEstadoProducto(id, 'rechazado');
-    this.productos = this.auth.getProductos();
-  }
-
   get solicitudesPendientes() {
     return this.usuarios.filter(u => u.rol === 'AGRICULTOR' && u.estadoValidacion === 'PENDIENTE');
   }
-  get productosPendientes() { return this.productos.filter(p => p.estado === 'pendiente'); }
   get totalAgricultores() { return this.usuarios.filter(u => u.rol === 'AGRICULTOR').length; }
   get totalCompradores() { return this.usuarios.filter(u => u.rol === 'COMPRADOR').length; }
-
-  estadoBadgeClass(estado: string): string {
-    const map: Record<string, string> = {
-      'aprobado': 'badge-entregado',
-      'rechazado': 'badge-cancelado',
-      'pendiente': 'badge-pendiente',
-    };
-    return map[estado] || 'badge-default';
-  }
 }

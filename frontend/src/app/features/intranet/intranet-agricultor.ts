@@ -2,7 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Auth, UsuarioSesion, ProductoAgrolink } from '../auth/services/auth';
+import { Auth, UsuarioSesion } from '../auth/services/auth';
 import {
   CultivoService,
   Cultivo,
@@ -34,21 +34,6 @@ import { DatosContactoService, ContactoPedido } from './datos-contacto.service';
 export class IntranetAgricultor implements OnInit {
   usuario: UsuarioSesion | null = null;
   seccionActiva = signal<string>('resumen');
-
-  // ──────────────────────────────────────────
-  // PRODUCTOS (mock)
-  // ──────────────────────────────────────────
-  misProductos: ProductoAgrolink[] = [];
-
-  formProducto = {
-    nombre: '',
-    descripcion: '',
-    precio: 0,
-    categoria: '',
-    unidad: 'kg',
-    stock: 0
-  };
-  mensajeExito = '';
 
   // ──────────────────────────────────────────
   // CULTIVOS (RF02 · RF03 · RF16 · RF17)
@@ -176,7 +161,6 @@ export class IntranetAgricultor implements OnInit {
 
   cargarDatos() {
     if (!this.usuario) return;
-    this.misProductos = this.auth.getProductosPorAgricultor(String(this.usuario.id));
     this.cultivoService.getCultivosPorAgricultor(this.usuario.id).subscribe({
       next: (data) => { this.misCultivos = data; },
       error: () => { this.misCultivos = []; }
@@ -199,32 +183,6 @@ export class IntranetAgricultor implements OnInit {
   }
 
   cerrarSesion() { this.auth.logout(); }
-
-  // ──────────────────────────────────────────
-  // PRODUCTOS
-  // ──────────────────────────────────────────
-  subirProducto() {
-    this.auth.subirProducto({ ...this.formProducto });
-    this.formProducto = { nombre: '', descripcion: '', precio: 0, categoria: '', unidad: 'kg', stock: 0 };
-    this.mensajeExito = 'Producto enviado a revisión exitosamente.';
-    setTimeout(() => this.mensajeExito = '', 5000);
-    this.cargarDatos();
-    this.irA('productos');
-  }
-
-  get totalProductos()      { return this.misProductos.length; }
-  get productosAprobados()  { return this.misProductos.filter(p => p.estado === 'aprobado').length; }
-  get productosPendientes() { return this.misProductos.filter(p => p.estado === 'pendiente').length; }
-  get productosRechazados() { return this.misProductos.filter(p => p.estado === 'rechazado').length; }
-
-  estadoBadgeClass(estado: string): string {
-    const map: Record<string, string> = {
-      'aprobado':  'badge-entregado',
-      'rechazado': 'badge-cancelado',
-      'pendiente': 'badge-pendiente',
-    };
-    return map[estado] || 'badge-default';
-  }
 
   // ──────────────────────────────────────────
   // CULTIVOS — RF02: Registrar cultivo
@@ -498,6 +456,10 @@ export class IntranetAgricultor implements OnInit {
   }
 
   // ── Métodos de Pedidos (RF18) ──
+  get pedidosPendientes(): number {
+    return this.pedidosRecibidos.filter(p => p.estado === 'PENDIENTE').length;
+  }
+
   cargarPedidosRecibidos(): void {
     if (!this.usuario) return;
     this.pedidoService.listarPorAgricultor(this.usuario.id).subscribe({

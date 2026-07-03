@@ -25,12 +25,6 @@
       <button class="nav-item" [class.active]="seccionActiva() === 'nuevo-cultivo'" (click)="irA('nuevo-cultivo')">
         <span class="nav-icon">➕</span> Nuevo Cultivo
       </button>
-      <button class="nav-item" [class.active]="seccionActiva() === 'productos'" (click)="irA('productos')">
-        <span class="nav-icon">🌱</span> Mis Productos
-      </button>
-      <button class="nav-item" [class.active]="seccionActiva() === 'subir'" (click)="irA('subir')">
-        <span class="nav-icon">📦</span> Subir Producto
-      </button>
       <button class="nav-item" [class.active]="seccionActiva() === 'lotes'" (click)="irA('lotes')">
         <span class="nav-icon">🏷️</span> Mis Lotes
       </button>
@@ -64,8 +58,6 @@
         <h1 *ngIf="seccionActiva() === 'resumen'">📊 Mi Resumen</h1>
         <h1 *ngIf="seccionActiva() === 'cultivos'">🌾 Mis Cultivos</h1>
         <h1 *ngIf="seccionActiva() === 'nuevo-cultivo'">➕ Nuevo Cultivo</h1>
-        <h1 *ngIf="seccionActiva() === 'productos'">🌱 Mis Productos</h1>
-        <h1 *ngIf="seccionActiva() === 'subir'">📦 Subir Nuevo Producto</h1>
         <h1 *ngIf="seccionActiva() === 'lotes'">🏷️ Mis Lotes Comerciales</h1>
         <h1 *ngIf="seccionActiva() === 'nuevo-lote'">📤 Publicar Nuevo Lote</h1>
         <h1 *ngIf="seccionActiva() === 'perfil'">👤 Mi Perfil</h1>
@@ -96,23 +88,23 @@
         <div class="kpi-card kpi-yellow">
           <div class="kpi-icon">📦</div>
           <div class="kpi-data">
-            <span class="kpi-value">{{ totalProductos }}</span>
-            <span class="kpi-label">Productos subidos</span>
+            <span class="kpi-value">{{ lotesPublicados }}</span>
+            <span class="kpi-label">Lotes publicados</span>
           </div>
         </div>
         <div class="kpi-card kpi-purple">
           <div class="kpi-icon">⏳</div>
           <div class="kpi-data">
-            <span class="kpi-value">{{ productosPendientes }}</span>
-            <span class="kpi-label">Productos en revisión</span>
+            <span class="kpi-value">{{ pedidosPendientes }}</span>
+            <span class="kpi-label">Pedidos pendientes</span>
           </div>
         </div>
       </div>
 
       <!-- Alertas rápidas -->
-      <div class="alert-box alert-yellow" *ngIf="productosPendientes > 0">
+      <div class="alert-box alert-yellow" *ngIf="pedidosPendientes > 0">
         <span class="alert-icon">📋</span>
-        <span>Tienes <strong>{{ productosPendientes }}</strong> producto(s) siendo evaluados por el administrador.</span>
+        <span>Tienes <strong>{{ pedidosPendientes }}</strong> pedido(s) esperando tu confirmación.</span>
       </div>
 
       <!-- Cultivos recientes -->
@@ -131,16 +123,18 @@
         </div>
       </div>
 
-      <!-- Productos recientes -->
-      <h2 class="section-subtitle" style="margin-top:24px;">Tus productos</h2>
+      <!-- Lotes recientes -->
+      <h2 class="section-subtitle" style="margin-top:24px;">Tus lotes comerciales</h2>
       <div class="cards-grid">
-        <div *ngIf="misProductos.length === 0" class="text-muted small">No has subido ningún producto todavía.</div>
-        <div class="harvest-card" *ngFor="let p of misProductos.slice(0,4)">
-          <div class="harvest-emoji">🌱</div>
+        <div *ngIf="misLotes.length === 0" class="text-muted small">No has publicado ningún lote todavía.
+          <button class="btn-link-inline" (click)="irA('nuevo-lote')">Publicar ahora →</button>
+        </div>
+        <div class="harvest-card" *ngFor="let lote of misLotes.slice(0,4)">
+          <div class="harvest-emoji">🏷️</div>
           <div class="harvest-info">
-            <span class="harvest-name">{{ p.nombre }}</span>
-            <span class="harvest-qty">S/ {{ p.precio }} x {{ p.unidad }}</span>
-            <span [class]="'badge ' + estadoBadgeClass(p.estado)">{{ p.estado | uppercase }}</span>
+            <span class="harvest-name">Lote #{{ lote.id }}</span>
+            <span class="harvest-qty">S/ {{ lote.precioUnitario }} x {{ lote.unidadMedida }} · Stock: {{ lote.stockDisponible }}</span>
+            <span class="badge" [ngClass]="estadoLoteComercialClass(lote.estado)">{{ lote.estado }}</span>
           </div>
         </div>
       </div>
@@ -447,108 +441,6 @@
           </button>
 
         </form>
-      </div>
-    </section>
-
-    <!-- ===== SECCIÓN: MIS PRODUCTOS ===== -->
-    <section *ngIf="seccionActiva() === 'productos'" class="content-section">
-
-      <div class="alert-box alert-success mb-4" *ngIf="mensajeExito">
-        <span class="alert-icon">✅</span>
-        <span>{{ mensajeExito }}</span>
-      </div>
-
-      <div class="table-header">
-        <h2>Registro de Productos</h2>
-        <span class="table-count">{{ misProductos.length }} registros</span>
-      </div>
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Producto</th>
-              <th>Categoría</th>
-              <th>Precio / Unidad</th>
-              <th>Stock</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngIf="misProductos.length === 0">
-              <td colspan="6" class="text-center py-4 text-muted">Aún no has subido productos.</td>
-            </tr>
-            <tr *ngFor="let p of misProductos">
-              <td>{{ p.fecha }}</td>
-              <td class="td-bold">{{ p.nombre }}</td>
-              <td>{{ p.categoria }}</td>
-              <td class="td-bold">S/ {{ p.precio }} <span class="text-muted fw-normal small">x {{ p.unidad }}</span></td>
-              <td>{{ p.stock }}</td>
-              <td><span [class]="'badge ' + estadoBadgeClass(p.estado)">{{ p.estado | uppercase }}</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ===== SECCIÓN: SUBIR PRODUCTO ===== -->
-    <section *ngIf="seccionActiva() === 'subir'" class="content-section">
-      <div class="card border-0 shadow-sm rounded-4 max-w-2xl mx-auto" style="max-width: 600px;">
-        <div class="card-body p-4 p-md-5">
-          <h4 class="fw-bold mb-1 text-success"><i class="bi bi-box-seam me-2"></i>Registrar nuevo producto</h4>
-          <p class="text-muted small mb-4">La publicación será revisada por un administrador antes de mostrarse a los compradores en el catálogo público.</p>
-
-          <form (ngSubmit)="subirProducto()" #formRef="ngForm">
-
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Nombre del producto</label>
-              <input type="text" class="form-control bg-light" name="nombre" [(ngModel)]="formProducto.nombre" required placeholder="Ej: Papas Nativas">
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Categoría</label>
-              <select class="form-select bg-light" name="categoria" [(ngModel)]="formProducto.categoria" required>
-                <option value="">Selecciona una categoría</option>
-                <option value="Frutas">Frutas</option>
-                <option value="Verduras">Verduras</option>
-                <option value="Tubérculos">Tubérculos</option>
-                <option value="Cereales">Cereales</option>
-                <option value="Lácteos">Lácteos</option>
-              </select>
-            </div>
-
-            <div class="row mb-3">
-              <div class="col-6">
-                <label class="form-label small fw-bold">Precio (S/)</label>
-                <input type="number" class="form-control bg-light" name="precio" [(ngModel)]="formProducto.precio" required min="0.1" step="0.1">
-              </div>
-              <div class="col-6">
-                <label class="form-label small fw-bold">Unidad de venta</label>
-                <select class="form-select bg-light" name="unidad" [(ngModel)]="formProducto.unidad" required>
-                  <option value="kg">Por Kilo (kg)</option>
-                  <option value="unidad">Por Unidad</option>
-                  <option value="caja">Por Caja</option>
-                  <option value="saco">Por Saco</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Stock disponible</label>
-              <input type="number" class="form-control bg-light" name="stock" [(ngModel)]="formProducto.stock" required min="1">
-            </div>
-
-            <div class="mb-4">
-              <label class="form-label small fw-bold">Descripción / Detalles adicionales</label>
-              <textarea class="form-control bg-light" name="descripcion" [(ngModel)]="formProducto.descripcion" rows="3" required placeholder="Describe la calidad, procedencia, etc..."></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-success w-100 rounded-pill py-2 fw-bold" [disabled]="!formRef.valid">
-              Enviar a revisión
-            </button>
-
-          </form>
-        </div>
       </div>
     </section>
 

@@ -23,10 +23,6 @@
         <span class="nav-icon">👨‍🌾</span> Solicitudes Agricultores
         <span class="badge bg-danger ms-auto" *ngIf="solicitudesPendientes.length > 0">{{ solicitudesPendientes.length }}</span>
       </button>
-      <button class="nav-item" [class.active]="seccionActiva() === 'productos'" (click)="irA('productos')">
-        <span class="nav-icon">📦</span> Peticiones de Productos
-        <span class="badge bg-danger ms-auto" *ngIf="productosPendientes.length > 0">{{ productosPendientes.length }}</span>
-      </button>
       <button class="nav-item" [class.active]="seccionActiva() === 'usuarios'" (click)="irA('usuarios')">
         <span class="nav-icon">👥</span> Todos los Usuarios
       </button>
@@ -49,7 +45,6 @@
       <div class="header-title">
         <h1 *ngIf="seccionActiva() === 'resumen'">📊 Panel de Control</h1>
         <h1 *ngIf="seccionActiva() === 'solicitudes'">👨‍🌾 Solicitudes de Agricultores</h1>
-        <h1 *ngIf="seccionActiva() === 'productos'">📦 Peticiones de Productos</h1>
         <h1 *ngIf="seccionActiva() === 'usuarios'">👥 Gestión de Usuarios</h1>
       </div>
       <div class="header-badge-admin">🛡️ Vista Administrador</div>
@@ -77,13 +72,6 @@
           <div class="kpi-data">
             <span class="kpi-value">{{ solicitudesPendientes.length }}</span>
             <span class="kpi-label">Agricultores por aprobar</span>
-          </div>
-        </div>
-        <div class="kpi-card kpi-purple">
-          <div class="kpi-icon">📦</div>
-          <div class="kpi-data">
-            <span class="kpi-value">{{ productosPendientes.length }}</span>
-            <span class="kpi-label">Productos por revisar</span>
           </div>
         </div>
       </div>
@@ -129,51 +117,6 @@
                 <div class="d-flex gap-2">
                   <button class="btn btn-sm btn-success rounded-pill" (click)="aprobarAgricultor(u.id)">Aprobar</button>
                   <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="rechazarAgricultor(u.id)">Rechazar</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ===== PRODUCTOS ===== -->
-    <section *ngIf="seccionActiva() === 'productos'" class="content-section">
-      <div class="table-header">
-        <h2>Productos enviados por agricultores</h2>
-        <span class="table-count">{{ productos.length }} productos</span>
-      </div>
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Agricultor</th>
-              <th>Producto</th>
-              <th>Precio / Unidad</th>
-              <th>Stock</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngIf="productos.length === 0">
-              <td colspan="7" class="text-center py-4 text-muted">No hay productos subidos.</td>
-            </tr>
-            <tr *ngFor="let p of productos">
-              <td>{{ p.fecha }}</td>
-              <td class="td-bold">{{ p.agricultorNombre }}</td>
-              <td>
-                <div class="td-bold">{{ p.nombre }}</div>
-                <div class="td-sub">{{ p.categoria }}</div>
-              </td>
-              <td>S/ {{ p.precio }} <span class="text-muted small">x {{ p.unidad }}</span></td>
-              <td>{{ p.stock }}</td>
-              <td><span [class]="'badge ' + estadoBadgeClass(p.estado)">{{ p.estado | uppercase }}</span></td>
-              <td>
-                <div class="d-flex gap-2" *ngIf="p.estado === 'pendiente'">
-                  <button class="btn btn-sm btn-success rounded-pill" (click)="aprobarProducto(p.id)">Aprobar</button>
-                  <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="rechazarProducto(p.id)">Rechazar</button>
                 </div>
               </td>
             </tr>
