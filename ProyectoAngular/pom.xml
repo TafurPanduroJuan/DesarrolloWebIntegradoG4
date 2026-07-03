@@ -39,6 +39,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Flyway: control de versiones del esquema de BD (evita el schema drift
+             que causó el error de check constraint en historial_estado_pedido) -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+
         <!-- Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
