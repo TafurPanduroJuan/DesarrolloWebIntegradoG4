@@ -3,6 +3,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { Auth, UsuarioSesion } from '../auth/services/auth';
 import { AuditoriaService, Auditoria } from './auditoria.service';
 
@@ -19,7 +20,7 @@ export interface UsuarioAdmin {
 @Component({
   selector: 'app-intranet-admin',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './intranet-admin.html',
   styleUrl: './intranet-admin.css',
 })
@@ -30,6 +31,12 @@ export class IntranetAdmin implements OnInit {
   usuarios: UsuarioAdmin[] = [];
   auditorias: Auditoria[] = [];
   cargandoAuditorias = false;
+
+  // Modal de Rechazo (RF-15)
+  showRechazoModal = false;
+  motivoRechazo = '';
+  usuarioRechazoId: number | null = null;
+  errorRechazoModal = '';
 
   private readonly API = environment.apiUrl;
 
@@ -83,6 +90,18 @@ export class IntranetAdmin implements OnInit {
     return activo ? 'Activo' : 'Inactivo';
   }
 
+  friendlyAccion(accion: string): string {
+    const mapping: Record<string, string> = {
+      'CREACION_USUARIO': 'Registro de Usuario',
+      'CONFIRMACION_PEDIDO': 'Pedido Confirmado',
+      'CAMBIO_STOCK': 'Cambio de Stock',
+      'CONTROL_ACCESO': 'Acceso de Cuenta',
+      'CAMBIO_PRECIO': 'Cambio de Precio',
+      'VALIDACION_CUENTA': 'Validación de Cuenta'
+    };
+    return mapping[accion] || accion;
+  }
+
   aprobarAgricultor(id: number) {
     this.http.patch(`${this.API}/usuarios/${id}/validacion`, {
       estadoValidacion: 'APROBADO'
@@ -90,11 +109,42 @@ export class IntranetAdmin implements OnInit {
   }
 
   rechazarAgricultor(id: number) {
-    const motivo = prompt('Motivo del rechazo:');
-    this.http.patch(`${this.API}/usuarios/${id}/validacion`, {
+    this.abrirModalRechazo(id);
+  }
+
+  abrirModalRechazo(id: number) {
+    this.usuarioRechazoId = id;
+    this.motivoRechazo = '';
+    this.errorRechazoModal = '';
+    this.showRechazoModal = true;
+  }
+
+  cerrarModalRechazo() {
+    this.showRechazoModal = false;
+    this.usuarioRechazoId = null;
+    this.motivoRechazo = '';
+    this.errorRechazoModal = '';
+  }
+
+  confirmarRechazo() {
+    if (!this.usuarioRechazoId) return;
+    if (!this.motivoRechazo.trim()) {
+      this.errorRechazoModal = 'El motivo del rechazo es obligatorio';
+      return;
+    }
+    
+    this.http.patch(`${this.API}/usuarios/${this.usuarioRechazoId}/validacion`, {
       estadoValidacion: 'RECHAZADO',
-      motivoObservacion: motivo || 'Sin motivo'
-    }).subscribe(() => this.cargarDatos());
+      motivoObservacion: this.motivoRechazo
+    }).subscribe({
+      next: () => {
+        this.cargarDatos();
+        this.cerrarModalRechazo();
+      },
+      error: () => {
+        this.errorRechazoModal = 'Error al registrar el rechazo de la cuenta.';
+      }
+    });
   }
 
   toggleUsuario(id: number, activo: boolean) {

@@ -106,11 +106,12 @@ public class UsuarioService {
         }
         notificacionService.enviarNotificacion(saved.getId(), msg, "CAMBIO_ESTADO", saved.getId());
 
-        // Auditoría si cambia activo (eliminación lógica) (RF-27)
-        if (anteriorActivo != nuevoActivo) {
-            auditoriaService.registrarAuditoria("ELIMINACION_LOGICA", 
-                "El estado activo del usuario " + saved.getEmail() + " cambió a " + nuevoActivo + " por validación " + req.getEstadoValidacion());
+        // Registrar auditoría de validación de cuenta (RF-27)
+        String descAuditoria = "Cuenta del agricultor " + saved.getEmail() + " fue " + req.getEstadoValidacion().name().toLowerCase();
+        if (req.getMotivoObservacion() != null && !req.getMotivoObservacion().isBlank()) {
+            descAuditoria += ". Motivo: " + req.getMotivoObservacion();
         }
+        auditoriaService.registrarAuditoria("VALIDACION_CUENTA", descAuditoria);
 
         return saved;
     }
@@ -145,10 +146,10 @@ public class UsuarioService {
         usuario.setActivo(activo);
         Usuario saved = usuarioRepository.save(usuario);
 
-        // Auditoría de deactivación / activación (eliminación lógica) (RF-27)
+        // Auditoría de deactivación / activación (RF-27)
         if (anteriorActivo != activo) {
-            auditoriaService.registrarAuditoria("ELIMINACION_LOGICA", 
-                "El estado activo del usuario " + saved.getEmail() + " se cambió a " + activo + " (Eliminación lógica/Activación)");
+            String desc = activo ? "Se habilitó el acceso al usuario " + saved.getEmail() : "Se deshabilitó el acceso al usuario " + saved.getEmail();
+            auditoriaService.registrarAuditoria("CONTROL_ACCESO", desc);
         }
         return saved;
     }
