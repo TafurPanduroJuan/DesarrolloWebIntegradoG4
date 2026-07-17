@@ -26,6 +26,9 @@
       <button class="nav-item" [class.active]="seccionActiva() === 'usuarios'" (click)="irA('usuarios')">
         <span class="nav-icon">👥</span> Todos los Usuarios
       </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'auditoria'" (click)="irA('auditoria')">
+        <span class="nav-icon">📜</span> Bitácora Auditoría
+      </button>
     </nav>
 
     <div class="sidebar-footer">
@@ -46,6 +49,7 @@
         <h1 *ngIf="seccionActiva() === 'resumen'">📊 Panel de Control</h1>
         <h1 *ngIf="seccionActiva() === 'solicitudes'">👨‍🌾 Solicitudes de Agricultores</h1>
         <h1 *ngIf="seccionActiva() === 'usuarios'">👥 Gestión de Usuarios</h1>
+        <h1 *ngIf="seccionActiva() === 'auditoria'">📜 Bitácora de Auditoría</h1>
       </div>
       <div class="header-badge-admin">🛡️ Vista Administrador</div>
     </header>
@@ -177,6 +181,51 @@
                   </button>
                 </div>
               </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== BITACORA DE AUDITORIA ===== -->
+    <section *ngIf="seccionActiva() === 'auditoria'" class="content-section">
+      <div class="table-header">
+        <h2>Registro de Auditoría de Operaciones Críticas</h2>
+        <span class="table-count">{{ auditorias.length }} registros</span>
+      </div>
+
+      <p *ngIf="cargandoAuditorias" class="loading-text">Cargando bitácora...</p>
+      <p *ngIf="!cargandoAuditorias && auditorias.length === 0" class="empty-state-sm">Sin registros de auditoría.</p>
+
+      <div class="table-wrapper" *ngIf="!cargandoAuditorias && auditorias.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Acción</th>
+              <th>Descripción</th>
+              <th>Responsable</th>
+              <th>IP Origen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let aud of auditorias">
+              <td style="white-space: nowrap;">{{ aud.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <span class="badge" 
+                      [ngClass]="{
+                        'bg-primary': aud.accion === 'CREACION_USUARIO',
+                        'bg-success': aud.accion === 'CONFIRMACION_PEDIDO',
+                        'bg-warning': aud.accion === 'CAMBIO_STOCK',
+                        'bg-danger': aud.accion === 'ELIMINACION_LOGICA',
+                        'bg-info': aud.accion === 'CAMBIO_PRECIO'
+                      }">
+                  {{ aud.accion }}
+                </span>
+              </td>
+              <td>{{ aud.descripcion }}</td>
+              <td><small>{{ aud.usuarioEmail || 'SYSTEM/ANONYMOUS' }}</small></td>
+              <td><code class="small text-muted">{{ aud.ipAddress }}</code></td>
             </tr>
           </tbody>
         </table>

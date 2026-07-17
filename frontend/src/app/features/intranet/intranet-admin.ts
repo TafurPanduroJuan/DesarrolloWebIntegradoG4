@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Auth, UsuarioSesion } from '../auth/services/auth';
+import { AuditoriaService, Auditoria } from './auditoria.service';
 
 export interface UsuarioAdmin {
   id: number;
@@ -27,13 +28,16 @@ export class IntranetAdmin implements OnInit {
   seccionActiva = signal<string>('resumen');
 
   usuarios: UsuarioAdmin[] = [];
+  auditorias: Auditoria[] = [];
+  cargandoAuditorias = false;
 
   private readonly API = environment.apiUrl;
 
   constructor(
     private auth: Auth,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private auditoriaService: AuditoriaService
   ) {}
 
   ngOnInit() {
@@ -52,7 +56,27 @@ export class IntranetAdmin implements OnInit {
     });
   }
 
-  irA(seccion: string) { this.seccionActiva.set(seccion); }
+  irA(seccion: string) {
+    this.seccionActiva.set(seccion);
+    if (seccion === 'auditoria') {
+      this.cargarAuditorias();
+    }
+  }
+
+  cargarAuditorias() {
+    this.cargandoAuditorias = true;
+    this.auditoriaService.getAuditorias().subscribe({
+      next: (data) => {
+        this.auditorias = data;
+        this.cargandoAuditorias = false;
+      },
+      error: () => {
+        this.auditorias = [];
+        this.cargandoAuditorias = false;
+      }
+    });
+  }
+
   cerrarSesion() { this.auth.logout(); }
 
   estado(activo: boolean): string {

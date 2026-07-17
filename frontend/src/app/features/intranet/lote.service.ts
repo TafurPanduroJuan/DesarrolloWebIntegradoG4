@@ -141,4 +141,22 @@ export class LoteService {
   getMovimientosPorLote(loteId: number): Observable<MovimientoStock[]> {
     return this.http.get<MovimientoStock[]>(`${this.STOCK_API}/lote/${loteId}`);
   }
+
+  actualizarPrecio(loteId: number, precio: number, motivo: string): Observable<LoteComercial> {
+    return this.http.patch<LoteComercial>(`${this.API}/${loteId}/precio`, { precio, motivo });
+  }
+
+  getPrecioHistorial(loteId: number): Observable<HistorialPrecio[]> {
+    return this.http.get<HistorialPrecio[]>(`${this.API}/${loteId}/precio-historial`);
+  }
+}
+
+export interface HistorialPrecio {
+  id: number;
+  loteId: number;
+  precioAnterior: number;
+  precioNuevo: number;
+  fechaCambio: string;
+  usuarioResponsableEmail: string;
+  motivo: string;
 }
