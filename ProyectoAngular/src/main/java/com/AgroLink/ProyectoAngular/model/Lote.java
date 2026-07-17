@@ -37,8 +37,6 @@ public class Lote {
 
     private String condicionesEntrega;
 
-
-    @Lob
     @Column(name = "imagen_url", columnDefinition = "TEXT")
     private String imagenUrl;
 
