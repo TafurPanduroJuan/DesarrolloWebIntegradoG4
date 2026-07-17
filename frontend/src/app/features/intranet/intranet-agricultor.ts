@@ -19,7 +19,8 @@ import {
   AjusteStockRequest,
   MovimientoStock,
   CalidadLote,
-  TipoMovimiento
+  TipoMovimiento,
+  HistorialPrecio
 } from './lote.service';
 import { PedidoService, PedidoResponse, EstadoPedido } from './pedido.service';
 import { DatosContactoService, ContactoPedido } from './datos-contacto.service';
@@ -143,6 +144,13 @@ export class IntranetAgricultor implements OnInit {
 
   calidadOpciones: CalidadLote[] = ['PRIMERA', 'SEGUNDA', 'TERCERA'];
   movimientoOpciones: TipoMovimiento[] = ['ENTRADA', 'SALIDA', 'AJUSTE'];
+
+  // RF-20: Campos para historial de precios y cambio de precio
+  formCambioPrecio = { precio: 0, motivo: '' };
+  historialPrecios: HistorialPrecio[] = [];
+  cargandoPrecioHistorial = false;
+  mensajeExitoPrecio = '';
+  errorPrecio = '';
 
   // ── RF18: Gestión de pedidos recibidos ──
   pedidosRecibidos: PedidoResponse[] = [];
@@ -428,6 +436,57 @@ export class IntranetAgricultor implements OnInit {
     this.lotes.getMovimientosPorLote(lote.id).subscribe({
       next: (data) => { this.historialMovimientos = data; this.cargandoHistorial = false; },
       error: () => { this.cargandoHistorial = false; }
+    });
+  }
+
+  abrirCambioPrecio(lote: LoteComercial) {
+    this.loteSeleccionado = lote;
+    this.formCambioPrecio = { precio: lote.precioUnitario, motivo: '' };
+    this.mensajeExitoPrecio = '';
+    this.errorPrecio = '';
+    this.panelLoteActivo = 'cambiar-precio';
+  }
+
+  guardarCambioPrecio() {
+    if (!this.loteSeleccionado) return;
+    this.errorPrecio = '';
+    this.mensajeExitoPrecio = '';
+    if (this.formCambioPrecio.precio <= 0) {
+      this.errorPrecio = 'El precio debe ser mayor a 0.';
+      return;
+    }
+    if (!this.formCambioPrecio.motivo.trim()) {
+      this.errorPrecio = 'El motivo del cambio es obligatorio.';
+      return;
+    }
+    this.lotes.actualizarPrecio(this.loteSeleccionado.id, this.formCambioPrecio.precio, this.formCambioPrecio.motivo).subscribe({
+      next: (loteActualizado) => {
+        this.mensajeExitoPrecio = `✅ Precio actualizado exitosamente.`;
+        setTimeout(() => {
+          this.mensajeExitoPrecio = '';
+          this.cerrarPanelLote();
+        }, 2000);
+        this.cargarLotes();
+      },
+      error: (err) => {
+        this.errorPrecio = err.error?.error || 'Error al actualizar el precio.';
+      }
+    });
+  }
+
+  verHistorialPrecio(lote: LoteComercial) {
+    this.loteSeleccionado = lote;
+    this.historialPrecios = [];
+    this.cargandoPrecioHistorial = true;
+    this.panelLoteActivo = 'historial-precio';
+    this.lotes.getPrecioHistorial(lote.id).subscribe({
+      next: (data) => {
+        this.historialPrecios = data;
+        this.cargandoPrecioHistorial = false;
+      },
+      error: () => {
+        this.cargandoPrecioHistorial = false;
+      }
     });
   }
 

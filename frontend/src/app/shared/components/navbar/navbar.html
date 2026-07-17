@@ -27,6 +27,44 @@
         </ng-container>
 
         <ng-container *ngIf="usuarioActual">
+          <!-- Notificaciones Dropdown -->
+          <li class="nav-item dropdown ms-lg-2 position-relative">
+            <a class="nav-link position-relative cursor-pointer" (click)="toggleDropdown($event)" style="color: #2d5a27; cursor: pointer;">
+              <i class="bi bi-bell-fill fs-5"></i>
+              <span *ngIf="unreadCount > 0" class="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; padding: 0.25em 0.5em;">
+                {{ unreadCount }}
+              </span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end p-0 shadow-lg border-0 rounded-3 position-absolute" [class.show]="showDropdown" style="right: 0; min-width: 320px; z-index: 1050; max-height: 400px; overflow-y: auto; background-color: #ffffff;">
+              <div class="p-2 border-bottom d-flex justify-content-between align-items-center bg-light rounded-top-3">
+                <span class="fw-bold small text-dark"><i class="bi bi-bell me-1 text-success"></i>Notificaciones</span>
+                <button *ngIf="unreadCount > 0" class="btn btn-link btn-xs text-decoration-none p-0 small text-success fw-semibold" style="font-size: 0.75rem;" (click)="marcarTodasLeidas()">Marcar todo como leído</button>
+              </div>
+              <div *ngIf="notificaciones.length === 0" class="p-4 text-center text-muted small">
+                No tienes notificaciones.
+              </div>
+              <ul class="list-group list-group-flush rounded-bottom-3" *ngIf="notificaciones.length > 0" style="margin: 0; padding: 0;">
+                <li *ngFor="let n of notificaciones" 
+                    class="list-group-item list-group-item-action p-2 d-flex flex-column gap-1 cursor-pointer" 
+                    [class.bg-light]="!n.leido" 
+                    (click)="marcarLeida(n)"
+                    style="border-bottom: 1px solid #f1f1f1; cursor: pointer;">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <span class="badge text-white" [style.background-color]="n.leido ? '#6c757d' : '#2d5a27'" style="font-size: 0.6rem;">
+                      {{ n.tipo }}
+                    </span>
+                    <span class="text-muted" style="font-size: 0.65rem;">
+                      {{ n.fecha | date:'dd/MM/yy HH:mm' }}
+                    </span>
+                  </div>
+                  <span class="small text-dark" [class.fw-bold]="!n.leido" style="font-size: 0.8rem; line-height: 1.2;">
+                    {{ n.mensaje }}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </li>
+
           <li class="nav-item ms-lg-2">
             <a class="nav-link fw-bold" routerLink="/intranet" style="color: #2d5a27;">
               <i class="bi bi-speedometer2 me-1"></i>Mi Panel

@@ -163,4 +163,37 @@ public class LoteController {
         loteService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/precio")
+    public ResponseEntity<?> actualizarPrecio(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Object precioObj = body.get("precio");
+        String motivo = (String) body.get("motivo");
+        
+        if (precioObj == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El campo 'precio' es obligatorio"));
+        }
+        if (motivo == null || motivo.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El campo 'motivo' es obligatorio"));
+        }
+        
+        BigDecimal nuevoPrecio;
+        try {
+            nuevoPrecio = new BigDecimal(precioObj.toString());
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El precio debe ser un número válido"));
+        }
+        
+        try {
+            Lote updated = loteService.actualizarPrecio(id, nuevoPrecio, motivo);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}/precio-historial")
+    public ResponseEntity<?> obtenerPrecioHistorial(@PathVariable Long id) {
+        if (loteService.buscarPorId(id) == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(loteService.obtenerHistorialPrecios(id));
+    }
 }

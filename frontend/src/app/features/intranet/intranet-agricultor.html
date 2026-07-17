@@ -547,6 +547,12 @@
                 <button class="btn-sm btn-outline" (click)="verHistorialStock(lote)" title="Ver historial">
                   📋 Historial
                 </button>
+                <button class="btn-sm btn-primary" (click)="abrirCambioPrecio(lote)" title="Cambiar precio" style="background-color: #2d5a27; color: white; border: none;">
+                  💸 Precio
+                </button>
+                <button class="btn-sm btn-outline" (click)="verHistorialPrecio(lote)" title="Ver historial precios">
+                  📈 Hist. Precio
+                </button>
               </td>
             </tr>
           </tbody>
@@ -608,6 +614,65 @@
                 <td><span class="badge" [ngClass]="tipoMovimientoClass(mov.tipo)">{{ tipoMovimientoLabel(mov.tipo) }}</span></td>
                 <td>{{ mov.cantidad }}</td>
                 <td>{{ mov.motivo }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Panel: Cambiar Precio (RF20) -->
+      <div *ngIf="panelLoteActivo === 'cambiar-precio' && loteSeleccionado" class="panel-detalle">
+        <div class="panel-header">
+          <h3>💸 Cambiar Precio — Lote #{{ loteSeleccionado.id }}</h3>
+          <button class="btn-cerrar" (click)="cerrarPanelLote()">✕</button>
+        </div>
+        <p class="panel-info">Precio actual: <strong>S/. {{ loteSeleccionado.precioUnitario | number:'1.2-2' }} x {{ loteSeleccionado.unidadMedida }}</strong></p>
+
+        <div *ngIf="mensajeExitoPrecio" class="alert alert-success">{{ mensajeExitoPrecio }}</div>
+        <div *ngIf="errorPrecio" class="alert alert-error">{{ errorPrecio }}</div>
+
+        <div class="form-group">
+          <label>Nuevo Precio (S/.) *</label>
+          <input type="number" [(ngModel)]="formCambioPrecio.precio" min="0.01" step="0.01" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Motivo del Cambio *</label>
+          <input type="text" [(ngModel)]="formCambioPrecio.motivo" placeholder="Ej: Ajuste de oferta y demanda" class="form-control" />
+        </div>
+        <div class="panel-actions">
+          <button class="btn-secondary" (click)="cerrarPanelLote()">Cancelar</button>
+          <button class="btn-primary" (click)="guardarCambioPrecio()" style="background-color: #2d5a27;">Actualizar Precio</button>
+        </div>
+      </div>
+
+      <!-- Panel: Historial de Precios (RF20) -->
+      <div *ngIf="panelLoteActivo === 'historial-precio' && loteSeleccionado" class="panel-detalle">
+        <div class="panel-header">
+          <h3>📈 Historial de Precios — Lote #{{ loteSeleccionado.id }}</h3>
+          <button class="btn-cerrar" (click)="cerrarPanelLote()">✕</button>
+        </div>
+        <p class="panel-info">Precio vigente: <strong>S/. {{ loteSeleccionado.precioUnitario | number:'1.2-2' }} x {{ loteSeleccionado.unidadMedida }}</strong></p>
+        
+        <p *ngIf="cargandoPrecioHistorial" class="loading-text">Cargando historial...</p>
+        <p *ngIf="!cargandoPrecioHistorial && historialPrecios.length === 0" class="empty-state-sm">Sin variaciones de precio registradas.</p>
+        <div *ngIf="!cargandoPrecioHistorial && historialPrecios.length > 0" class="table-container">
+          <table class="tabla-cultivos">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Antiguo</th>
+                <th>Nuevo</th>
+                <th>Responsable</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let hp of historialPrecios">
+                <td>{{ hp.fechaCambio | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>S/. {{ hp.precioAnterior | number:'1.2-2' }}</td>
+                <td>S/. {{ hp.precioNuevo | number:'1.2-2' }}</td>
+                <td><small>{{ hp.usuarioResponsableEmail }}</small></td>
+                <td>{{ hp.motivo }}</td>
               </tr>
             </tbody>
           </table>
