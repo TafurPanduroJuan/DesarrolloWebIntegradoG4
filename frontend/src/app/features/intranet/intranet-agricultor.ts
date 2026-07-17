@@ -49,6 +49,7 @@ export class IntranetAgricultor implements OnInit {
   formCultivo: {
     nombreProducto: string;
     variedad: string;
+    categoria: string;
     fechaSiembra: string;
     estado: EstadoCultivo;
     nombreLote: string;
@@ -58,6 +59,7 @@ export class IntranetAgricultor implements OnInit {
   } = {
     nombreProducto: '',
     variedad: '',
+    categoria: '',
     fechaSiembra: '',
     estado: 'SEMBRADO',
     nombreLote: '',
@@ -66,6 +68,13 @@ export class IntranetAgricultor implements OnInit {
     descripcion: ''
   };
   mensajeExitoCultivo = '';
+
+  // Opciones de categoría para el formulario (deben coincidir con CategoriaProductoEnum del backend)
+  categoriasCultivo: string[] = ['FRUTAS', 'VERDURAS', 'TUBERCULOS', 'CEREALES', 'LEGUMBRES', 'HORTALIZAS', 'OTROS'];
+  readonly categoriaCultivoLabel: Record<string, string> = {
+    FRUTAS: 'Frutas', VERDURAS: 'Verduras', TUBERCULOS: 'Tubérculos',
+    CEREALES: 'Cereales', LEGUMBRES: 'Legumbres', HORTALIZAS: 'Hortalizas', OTROS: 'Otros'
+  };
 
   // Formulario: Seguimiento (RF03)
   formSeguimiento: SeguimientoRequest = {
@@ -104,10 +113,14 @@ export class IntranetAgricultor implements OnInit {
     precioUnitario: 0,
     unidadMedida: 'kg',
     fechaEntregaEstimada: '',
-    condicionesEntrega: ''
+    condicionesEntrega: '',
+    imagenUrl: ''
   };
   mensajeExitoLoteComercial = '';
   errorLoteComercial = '';
+  errorImagenLote = '';
+  private readonly MAX_IMAGEN_BYTES = 3 * 1024 * 1024; // 3 MB
+  private readonly TIPOS_IMAGEN_PERMITIDOS = ['image/jpeg', 'image/jpg', 'image/png'];
 
 
   // ──────────────────────────────────────────
@@ -196,7 +209,7 @@ export class IntranetAgricultor implements OnInit {
     this.cultivoService.guardarCultivo(payload).subscribe({
       next: () => {
         this.formCultivo = {
-          nombreProducto: '', variedad: '', fechaSiembra: '', estado: 'SEMBRADO',
+          nombreProducto: '', variedad: '', categoria: '', fechaSiembra: '', estado: 'SEMBRADO',
           nombreLote: '', areaHa: 0, ubicacion: '', descripcion: ''
         };
         this.mensajeExitoCultivo = '¡Cultivo registrado exitosamente!';
@@ -316,6 +329,41 @@ export class IntranetAgricultor implements OnInit {
   }
 
   // ──────────────────────────────────────────
+  // RF04: Selección de imagen del lote (JPG/PNG desde el ordenador)
+  // ──────────────────────────────────────────
+  onImagenSeleccionada(event: Event): void {
+    this.errorImagenLote = '';
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    if (!this.TIPOS_IMAGEN_PERMITIDOS.includes(file.type)) {
+      this.errorImagenLote = 'Solo se permiten imágenes en formato JPG o PNG.';
+      input.value = '';
+      return;
+    }
+    if (file.size > this.MAX_IMAGEN_BYTES) {
+      this.errorImagenLote = 'La imagen no debe superar los 3 MB.';
+      input.value = '';
+      return;
+    }
+
+    const lector = new FileReader();
+    lector.onload = () => {
+      this.formLoteComercial.imagenUrl = lector.result as string;
+    };
+    lector.onerror = () => {
+      this.errorImagenLote = 'No se pudo leer la imagen. Intenta con otro archivo.';
+    };
+    lector.readAsDataURL(file);
+  }
+
+  quitarImagenLote(): void {
+    this.formLoteComercial.imagenUrl = '';
+    this.errorImagenLote = '';
+  }
+
+  // ──────────────────────────────────────────
   // RF04: Publicar lote comercial
   // ──────────────────────────────────────────
   publicarLoteComercial() {
@@ -331,8 +379,9 @@ export class IntranetAgricultor implements OnInit {
         this.formLoteComercial = {
           cultivoId: 0, cantidadKg: 0, calidad: 'PRIMERA',
           precioUnitario: 0, unidadMedida: 'kg',
-          fechaEntregaEstimada: '', condicionesEntrega: ''
+          fechaEntregaEstimada: '', condicionesEntrega: '', imagenUrl: ''
         };
+        this.errorImagenLote = '';
         this.cargarLotes();
         this.irA('lotes');
       },
