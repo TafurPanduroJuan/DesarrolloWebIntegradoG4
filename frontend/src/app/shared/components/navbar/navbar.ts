@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Auth, UsuarioSesion } from '../../../features/auth/services/auth';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { NotificacionService, Notificacion } from '../../../features/intranet/notificacion.service';
 
 @Component({
@@ -16,6 +18,7 @@ export class Navbar implements OnInit, OnDestroy {
   unreadCount = 0;
   showDropdown = false;
   private intervalId: any;
+  private navSub?: Subscription;
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
@@ -35,6 +38,16 @@ export class Navbar implements OnInit, OnDestroy {
   ngOnInit() {
     if (this.usuarioActual) {
       this.cargarNotificaciones();
+      
+      // Carga inmediata al cambiar de ruta
+      this.navSub = this.router.events.pipe(
+        filter(event => event instanceof NavigationEnd)
+      ).subscribe(() => {
+        if (this.usuarioActual) {
+          this.cargarNotificaciones();
+        }
+      });
+
       // Polling cada 15 segundos
       this.intervalId = setInterval(() => {
         if (this.usuarioActual) {
@@ -47,6 +60,9 @@ export class Navbar implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.intervalId) {
       clearInterval(this.intervalId);
+    }
+    if (this.navSub) {
+      this.navSub.unsubscribe();
     }
   }
 

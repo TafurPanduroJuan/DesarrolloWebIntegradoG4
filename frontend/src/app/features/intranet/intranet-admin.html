@@ -217,10 +217,11 @@
                         'bg-primary': aud.accion === 'CREACION_USUARIO',
                         'bg-success': aud.accion === 'CONFIRMACION_PEDIDO',
                         'bg-warning': aud.accion === 'CAMBIO_STOCK',
-                        'bg-danger': aud.accion === 'ELIMINACION_LOGICA',
-                        'bg-info': aud.accion === 'CAMBIO_PRECIO'
+                        'bg-danger': aud.accion === 'CONTROL_ACCESO',
+                        'bg-info': aud.accion === 'CAMBIO_PRECIO',
+                        'bg-secondary': aud.accion === 'VALIDACION_CUENTA'
                       }">
-                  {{ aud.accion }}
+                  {{ friendlyAccion(aud.accion) }}
                 </span>
               </td>
               <td>{{ aud.descripcion }}</td>
@@ -233,4 +234,27 @@
     </section>
 
   </main>
+
+  <!-- Modal para Motivo de Rechazo (RF-15) -->
+  <div class="custom-modal-overlay" *ngIf="showRechazoModal">
+    <div class="custom-modal-card">
+      <div class="custom-modal-header">
+        <h4 class="custom-modal-title">❌ Motivo del Rechazo de Cuenta</h4>
+        <button class="btn-modal-close" (click)="cerrarModalRechazo()">✕</button>
+      </div>
+      <div class="custom-modal-body">
+        <p class="text-muted small mb-3">Por favor, especifica la razón por la cual estás rechazando esta solicitud de cuenta. Este motivo será enviado al agricultor en su bandeja de notificaciones.</p>
+        <div class="form-group mb-3" style="display: flex; flex-direction: column; gap: 6px;">
+          <label class="fw-semibold small text-dark">Motivo / Observación *</label>
+          <textarea class="form-control" [(ngModel)]="motivoRechazo" rows="4" placeholder="Ej: Los datos del DNI no coinciden con los registros públicos o la foto de la finca es ilegible." style="width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px; font-size: 0.9rem; resize: vertical;"></textarea>
+        </div>
+        <div *ngIf="errorRechazoModal" class="alert alert-danger py-2 px-3 small" style="margin-top: 10px; border-radius: 8px; font-size: 0.85rem; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb;">{{ errorRechazoModal }}</div>
+      </div>
+      <div class="custom-modal-footer">
+        <button class="btn btn-secondary rounded-pill px-4" (click)="cerrarModalRechazo()" style="padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 20px; background: white; cursor: pointer;">Cancelar</button>
+        <button class="btn btn-danger rounded-pill px-4" (click)="confirmarRechazo()" style="padding: 8px 16px; border: none; border-radius: 20px; background: #dc2626; color: white; cursor: pointer; margin-left: 8px;">Rechazar Cuenta</button>
+      </div>
+    </div>
+  </div>
+
 </div>
