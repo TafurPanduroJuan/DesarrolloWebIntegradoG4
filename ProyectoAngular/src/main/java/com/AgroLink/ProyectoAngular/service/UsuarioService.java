@@ -8,6 +8,8 @@ import com.AgroLink.ProyectoAngular.model.enums.RolEnum;
 import com.AgroLink.ProyectoAngular.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.AgroLink.ProyectoAngular.service.AuditoriaService;
+import com.AgroLink.ProyectoAngular.service.NotificacionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,12 @@ public class UsuarioService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AuditoriaService auditoriaService;
+
+    @Autowired
+    private NotificacionService notificacionService;
 
     // ---- RF13 & RF14: Registro ----
     @Transactional
@@ -65,7 +73,10 @@ public class UsuarioService {
             usuario.setActivo(true);
         }
 
-        return usuarioRepository.save(usuario);
+        Usuario saved = usuarioRepository.save(usuario);
+        auditoriaService.registrarAuditoria("CREACION_USUARIO", 
+            "Usuario registrado exitosamente con email: " + saved.getEmail() + " y rol: " + saved.getRol());
+        return saved;
     }
 
     // ---- RF15: Validar agricultor ----
@@ -78,13 +89,30 @@ public class UsuarioService {
             throw new IllegalArgumentException("Solo se pueden validar agricultores");
         }
 
+        boolean anteriorActivo = Boolean.TRUE.equals(usuario.getActivo());
         usuario.setEstadoValidacion(req.getEstadoValidacion());
         usuario.setMotivoObservacion(req.getMotivoObservacion());
 
         // Si aprueba → activa cuenta; si rechaza/observa → desactiva
-        usuario.setActivo(req.getEstadoValidacion() == EstadoValidacionEnum.APROBADO);
+        boolean nuevoActivo = req.getEstadoValidacion() == EstadoValidacionEnum.APROBADO;
+        usuario.setActivo(nuevoActivo);
 
-        return usuarioRepository.save(usuario);
+        Usuario saved = usuarioRepository.save(usuario);
+
+        // Notificaciones internas (RF-24)
+        String msg = "Tu cuenta de agricultor ha sido " + req.getEstadoValidacion();
+        if (req.getMotivoObservacion() != null && !req.getMotivoObservacion().isBlank()) {
+            msg += ". Motivo: " + req.getMotivoObservacion();
+        }
+        notificacionService.enviarNotificacion(saved.getId(), msg, "CAMBIO_ESTADO", saved.getId());
+
+        // Auditoría si cambia activo (eliminación lógica) (RF-27)
+        if (anteriorActivo != nuevoActivo) {
+            auditoriaService.registrarAuditoria("ELIMINACION_LOGICA", 
+                "El estado activo del usuario " + saved.getEmail() + " cambió a " + nuevoActivo + " por validación " + req.getEstadoValidacion());
+        }
+
+        return saved;
     }
 
     // ---- RF01: Gestión CRUD ----
@@ -113,8 +141,16 @@ public class UsuarioService {
     public Usuario actualizarEstado(Long id, Boolean activo) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + id));
+        boolean anteriorActivo = Boolean.TRUE.equals(usuario.getActivo());
         usuario.setActivo(activo);
-        return usuarioRepository.save(usuario);
+        Usuario saved = usuarioRepository.save(usuario);
+
+        // Auditoría de deactivación / activación (eliminación lógica) (RF-27)
+        if (anteriorActivo != activo) {
+            auditoriaService.registrarAuditoria("ELIMINACION_LOGICA", 
+                "El estado activo del usuario " + saved.getEmail() + " se cambió a " + activo + " (Eliminación lógica/Activación)");
+        }
+        return saved;
     }
 
     @Transactional
