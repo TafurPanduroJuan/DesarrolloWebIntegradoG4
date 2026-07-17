@@ -196,6 +196,7 @@ public class PedidoService {
     // -- RF08: Cambio de estado con historial ----------------------
 
     private static final Map<EstadoPedidoEnum, Set<EstadoPedidoEnum>> TRANSICIONES = Map.of(
+        EstadoPedidoEnum.PENDIENTE,  Set.of(EstadoPedidoEnum.CANCELADO),
         EstadoPedidoEnum.CONFIRMADO, Set.of(EstadoPedidoEnum.PREPARADO, EstadoPedidoEnum.CANCELADO),
         EstadoPedidoEnum.PREPARADO,  Set.of(EstadoPedidoEnum.DESPACHADO, EstadoPedidoEnum.CANCELADO),
         EstadoPedidoEnum.DESPACHADO, Set.of(EstadoPedidoEnum.ENTREGADO, EstadoPedidoEnum.CANCELADO)
@@ -217,6 +218,9 @@ public class PedidoService {
             for (DetallePedido d : detalles) {
                 if (d.getEstadoDetalle() == EstadoDetalleEnum.CONFIRMADO) {
                     loteService.cancelarPedido(d.getLoteId(), d.getCantidadSolicitada());
+                    d.setEstadoDetalle(EstadoDetalleEnum.CANCELADO);
+                    detalleRepository.save(d);
+                } else if (d.getEstadoDetalle() == EstadoDetalleEnum.PENDIENTE) {
                     d.setEstadoDetalle(EstadoDetalleEnum.CANCELADO);
                     detalleRepository.save(d);
                 }
