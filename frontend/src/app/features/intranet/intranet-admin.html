@@ -217,7 +217,7 @@
                         'bg-primary': aud.accion === 'CREACION_USUARIO',
                         'bg-success': aud.accion === 'CONFIRMACION_PEDIDO',
                         'bg-warning': aud.accion === 'CAMBIO_STOCK',
-                        'bg-danger': aud.accion === 'CONTROL_ACCESO',
+                        'bg-danger': aud.accion === 'CONTROL_ACCESO' || aud.accion === 'ELIMINACION_LOGICA',
                         'bg-info': aud.accion === 'CAMBIO_PRECIO',
                         'bg-secondary': aud.accion === 'VALIDACION_CUENTA'
                       }">
@@ -251,8 +251,8 @@
         <div *ngIf="errorRechazoModal" class="alert alert-danger py-2 px-3 small" style="margin-top: 10px; border-radius: 8px; font-size: 0.85rem; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb;">{{ errorRechazoModal }}</div>
       </div>
       <div class="custom-modal-footer">
-        <button class="btn btn-secondary rounded-pill px-4" (click)="cerrarModalRechazo()" style="padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 20px; background: white; cursor: pointer;">Cancelar</button>
-        <button class="btn btn-danger rounded-pill px-4" (click)="confirmarRechazo()" style="padding: 8px 16px; border: none; border-radius: 20px; background: #dc2626; color: white; cursor: pointer; margin-left: 8px;">Rechazar Cuenta</button>
+        <button class="btn btn-outline-secondary rounded-pill px-4" (click)="cerrarModalRechazo()">Cancelar</button>
+        <button class="btn btn-danger rounded-pill px-4" (click)="confirmarRechazo()">Rechazar Cuenta</button>
       </div>
     </div>
   </div>
