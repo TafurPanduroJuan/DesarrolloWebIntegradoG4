@@ -96,6 +96,7 @@ export class IntranetAdmin implements OnInit {
       'CONFIRMACION_PEDIDO': 'Pedido Confirmado',
       'CAMBIO_STOCK': 'Cambio de Stock',
       'CONTROL_ACCESO': 'Acceso de Cuenta',
+      'ELIMINACION_LOGICA': 'Acceso de Cuenta',
       'CAMBIO_PRECIO': 'Cambio de Precio',
       'VALIDACION_CUENTA': 'Validación de Cuenta'
     };
