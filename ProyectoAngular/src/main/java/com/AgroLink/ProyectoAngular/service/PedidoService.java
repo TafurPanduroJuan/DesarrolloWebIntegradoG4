@@ -22,6 +22,8 @@ import com.AgroLink.ProyectoAngular.repository.CultivoRepository;
 import com.AgroLink.ProyectoAngular.repository.DetallePedidoRepository;
 import com.AgroLink.ProyectoAngular.repository.HistorialEstadoPedidoRepository;
 import com.AgroLink.ProyectoAngular.repository.PedidoRepository;
+import com.AgroLink.ProyectoAngular.service.AuditoriaService;
+import com.AgroLink.ProyectoAngular.service.NotificacionService;
 
 /**
  * RF07 - Registro de pedidos con validacion de stock.
@@ -37,17 +39,23 @@ public class PedidoService {
     private final HistorialEstadoPedidoRepository historialRepository;
     private final LoteService loteService;
     private final CultivoRepository cultivoRepository;
+    private final AuditoriaService auditoriaService;
+    private final NotificacionService notificacionService;
 
     public PedidoService(PedidoRepository pedidoRepository,
                          DetallePedidoRepository detalleRepository,
                          HistorialEstadoPedidoRepository historialRepository,
                          LoteService loteService,
-                         CultivoRepository cultivoRepository) {
+                         CultivoRepository cultivoRepository,
+                         AuditoriaService auditoriaService,
+                         NotificacionService notificacionService) {
         this.pedidoRepository    = pedidoRepository;
         this.detalleRepository   = detalleRepository;
         this.historialRepository = historialRepository;
         this.loteService         = loteService;
         this.cultivoRepository   = cultivoRepository;
+        this.auditoriaService    = auditoriaService;
+        this.notificacionService = notificacionService;
     }
 
     // -- RF07: Crear pedido con validacion de stock ----------------
@@ -99,6 +107,14 @@ public class PedidoService {
 
         registrarHistorial(pedidoGuardado.getId(), null, EstadoPedidoEnum.PENDIENTE, "Pedido creado");
 
+        // RF-24: Notificación nuevo pedido al agricultor
+        notificacionService.enviarNotificacion(
+            agricultorId,
+            "Nuevo pedido #" + pedidoGuardado.getId() + " recibido para tu lote por una cantidad de " + req.getCantidadSolicitada() + " " + (lote.getUnidadMedida() != null ? lote.getUnidadMedida() : "kg"),
+            "NUEVO_PEDIDO",
+            pedidoGuardado.getId()
+        );
+
         return toResponse(pedidoGuardado);
     }
 
@@ -127,6 +143,18 @@ public class PedidoService {
         registrarHistorial(pedidoId, EstadoPedidoEnum.PENDIENTE, EstadoPedidoEnum.CONFIRMADO,
                 "Pedido confirmado por el agricultor");
 
+        // RF-24: Notificación de confirmación al comprador
+        notificacionService.enviarNotificacion(
+            pedido.getCompradorId(),
+            "Tu pedido #" + pedido.getId() + " ha sido confirmado por el agricultor.",
+            "CONFIRMACION",
+            pedido.getId()
+        );
+
+        // RF-27: Auditoría de confirmación de pedido
+        auditoriaService.registrarAuditoria("CONFIRMACION_PEDIDO",
+            "Pedido ID: " + pedidoId + " confirmado por el agricultor ID: " + agricultorId);
+
         return toResponse(pedido);
     }
 
@@ -153,6 +181,14 @@ public class PedidoService {
         pedidoRepository.save(pedido);
         String obs = (motivo != null && !motivo.isBlank()) ? motivo : "Pedido rechazado por el agricultor";
         registrarHistorial(pedidoId, EstadoPedidoEnum.PENDIENTE, EstadoPedidoEnum.RECHAZADO, obs);
+
+        // RF-24: Notificación de rechazo al comprador
+        notificacionService.enviarNotificacion(
+            pedido.getCompradorId(),
+            "Tu pedido #" + pedido.getId() + " ha sido rechazado por el agricultor. Motivo: " + obs,
+            "RECHAZO",
+            pedido.getId()
+        );
 
         return toResponse(pedido);
     }
@@ -192,6 +228,14 @@ public class PedidoService {
         String obs = (observacion != null && !observacion.isBlank()) ? observacion
                 : estadoActual + " -> " + nuevoEstado;
         registrarHistorial(pedidoId, estadoActual, nuevoEstado, obs);
+
+        // RF-24: Notificación de cambio de estado al comprador
+        notificacionService.enviarNotificacion(
+            pedido.getCompradorId(),
+            "El estado de tu pedido #" + pedido.getId() + " ha cambiado de " + estadoActual + " a " + nuevoEstado,
+            "CAMBIO_ESTADO",
+            pedido.getId()
+        );
 
         return toResponse(pedido);
     }

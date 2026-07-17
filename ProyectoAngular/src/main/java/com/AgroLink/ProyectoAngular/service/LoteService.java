@@ -21,6 +21,12 @@ import com.AgroLink.ProyectoAngular.model.enums.TipoMovimientoEnum;
 import com.AgroLink.ProyectoAngular.repository.CultivoRepository;
 import com.AgroLink.ProyectoAngular.repository.LoteRepository;
 import com.AgroLink.ProyectoAngular.repository.MovimientoStockRepository;
+import com.AgroLink.ProyectoAngular.repository.HistorialPrecioRepository;
+import com.AgroLink.ProyectoAngular.repository.UsuarioRepository;
+import com.AgroLink.ProyectoAngular.model.HistorialPrecio;
+import com.AgroLink.ProyectoAngular.model.Usuario;
+import com.AgroLink.ProyectoAngular.model.enums.RolEnum;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * RF04 – Publicación de lotes comerciales.
@@ -35,13 +41,25 @@ public class LoteService {
     private final LoteRepository loteRepository;
     private final MovimientoStockRepository movimientoRepository;
     private final CultivoRepository cultivoRepository;
+    private final HistorialPrecioRepository historialPrecioRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final AuditoriaService auditoriaService;
+    private final NotificacionService notificacionService;
 
     public LoteService(LoteRepository loteRepository,
                        MovimientoStockRepository movimientoRepository,
-                       CultivoRepository cultivoRepository) {
-        this.loteRepository       = loteRepository;
-        this.movimientoRepository = movimientoRepository;
-        this.cultivoRepository    = cultivoRepository;
+                       CultivoRepository cultivoRepository,
+                       HistorialPrecioRepository historialPrecioRepository,
+                       UsuarioRepository usuarioRepository,
+                       AuditoriaService auditoriaService,
+                       NotificacionService notificacionService) {
+        this.loteRepository            = loteRepository;
+        this.movimientoRepository      = movimientoRepository;
+        this.cultivoRepository         = cultivoRepository;
+        this.historialPrecioRepository = historialPrecioRepository;
+        this.usuarioRepository         = usuarioRepository;
+        this.auditoriaService          = auditoriaService;
+        this.notificacionService       = notificacionService;
     }
 
     // ── Consultas ────────────────────────────────────────────────
@@ -167,9 +185,21 @@ public class LoteService {
 
         Lote guardado = loteRepository.save(lote);
 
-        
         registrarMovimiento(guardado.getId(), TipoMovimientoEnum.ENTRADA,
                 req.getCantidadKg(), "Stock inicial al publicar lote");
+
+        // RF-27: Auditoría cambio de stock
+        auditoriaService.registrarAuditoria("CAMBIO_STOCK", 
+            "Registro de stock inicial de " + guardado.getCantidadKg() + " " + guardado.getUnidadMedida() + " para el lote ID: " + guardado.getId());
+
+        // RF-24: Notificación nuevo lote a compradores
+        cultivoRepository.findById(guardado.getCultivoId()).ifPresent(c -> {
+            List<Usuario> compradores = usuarioRepository.findByRol(RolEnum.COMPRADOR);
+            String msg = "Nuevo lote publicado: " + c.getNombreProducto() + " (" + guardado.getCalidad() + ") - S/. " + guardado.getPrecioUnitario() + " por " + guardado.getUnidadMedida();
+            for (Usuario comp : compradores) {
+                notificacionService.enviarNotificacion(comp.getId(), msg, "PUBLICACION_LOTE", guardado.getId());
+            }
+        });
 
         return guardado;
     }
@@ -196,6 +226,11 @@ public class LoteService {
         Lote actualizado = loteRepository.save(lote);
         registrarMovimiento(loteId, TipoMovimientoEnum.SALIDA, cantidad,
                 "Salida por confirmación de pedido");
+
+        // RF-27: Auditoría cambio de stock
+        auditoriaService.registrarAuditoria("CAMBIO_STOCK", 
+            "Descuento de stock en lote ID: " + loteId + " por confirmación de pedido. Cantidad: " + cantidad + ". Nuevo stock: " + nuevoStock);
+
         return actualizado;
     }
 
@@ -213,6 +248,11 @@ public class LoteService {
         Lote actualizado = loteRepository.save(lote);
         registrarMovimiento(loteId, TipoMovimientoEnum.ENTRADA, cantidad,
                 "Devolución por cancelación de pedido");
+
+        // RF-27: Auditoría cambio de stock
+        auditoriaService.registrarAuditoria("CAMBIO_STOCK", 
+            "Devolución de stock en lote ID: " + loteId + " por cancelación de pedido. Cantidad: " + cantidad + ". Nuevo stock: " + actualizado.getStockDisponible());
+
         return actualizado;
     }
 
@@ -252,6 +292,17 @@ public class LoteService {
         actualizarEstadoPorStock(lote);
         Lote actualizado = loteRepository.save(lote);
         registrarMovimiento(loteId, req.getTipo(), req.getCantidad(), req.getMotivo());
+
+        // RF-27: Auditoría cambio de stock
+        auditoriaService.registrarAuditoria("CAMBIO_STOCK", 
+            "Ajuste manual de stock (" + req.getTipo() + ") en lote ID: " + loteId + ". Cantidad: " + req.getCantidad() + ". Motivo: " + req.getMotivo() + ". Nuevo stock: " + nuevoStock);
+
+        // RF-24: Notificación al agricultor
+        cultivoRepository.findById(lote.getCultivoId()).ifPresent(c -> {
+            String msg = "El stock de tu lote para " + c.getNombreProducto() + " ha sido actualizado a " + nuevoStock + " " + lote.getUnidadMedida();
+            notificacionService.enviarNotificacion(c.getAgricultorId(), msg, "STOCK_UPDATE", lote.getId());
+        });
+
         return actualizado;
     }
 
@@ -292,5 +343,48 @@ public class LoteService {
         } else if (lote.getEstado() == EstadoLoteEnum.AGOTADO) {
             lote.setEstado(EstadoLoteEnum.ACTIVO);
         }
+    }
+
+    @Transactional
+    public Lote actualizarPrecio(Long loteId, BigDecimal nuevoPrecio, String motivo) {
+        if (nuevoPrecio == null || nuevoPrecio.doubleValue() <= 0) {
+            throw new IllegalArgumentException("El precio debe ser mayor a 0");
+        }
+        Lote lote = obtenerLoteOFallar(loteId);
+        BigDecimal precioAnterior = lote.getPrecioUnitario();
+        
+        lote.setPrecioUnitario(nuevoPrecio);
+        Lote guardado = loteRepository.save(lote);
+        
+        String emailResponsable = "SYSTEM/ANONYMOUS";
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            emailResponsable = SecurityContextHolder.getContext().getAuthentication().getName();
+        }
+        
+        // Registrar historial de precios (RF-20)
+        HistorialPrecio hp = new HistorialPrecio();
+        hp.setLoteId(loteId);
+        hp.setPrecioAnterior(precioAnterior);
+        hp.setPrecioNuevo(nuevoPrecio);
+        hp.setFechaCambio(LocalDateTime.now());
+        hp.setUsuarioResponsableEmail(emailResponsable);
+        hp.setMotivo(motivo);
+        historialPrecioRepository.save(hp);
+        
+        // Registrar auditoría de cambio de precio (RF-27)
+        auditoriaService.registrarAuditoria("CAMBIO_PRECIO", 
+            "Cambio de precio en lote ID: " + loteId + " de S/. " + precioAnterior + " a S/. " + nuevoPrecio + ". Motivo: " + motivo);
+            
+        // Notificar al agricultor (RF-24)
+        cultivoRepository.findById(lote.getCultivoId()).ifPresent(c -> {
+            String msg = "El precio de tu lote para " + c.getNombreProducto() + " ha sido actualizado a S/. " + nuevoPrecio;
+            notificacionService.enviarNotificacion(c.getAgricultorId(), msg, "STOCK_UPDATE", lote.getId());
+        });
+        
+        return guardado;
+    }
+
+    public List<HistorialPrecio> obtenerHistorialPrecios(Long loteId) {
+        return historialPrecioRepository.findTop5ByLoteIdOrderByFechaCambioDesc(loteId);
     }
 }
