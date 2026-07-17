@@ -29,6 +29,7 @@ public class LoteCatalogoResponse {
     private LocalDate fechaCosecha;
     private String condicionesEntrega;
     private String estado;
+    private String imagenUrl;
 
     // ── Constructor ──────────────────────────────────────────────
     public LoteCatalogoResponse() {}
@@ -78,4 +79,7 @@ public class LoteCatalogoResponse {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 }

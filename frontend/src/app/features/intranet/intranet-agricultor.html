@@ -388,6 +388,16 @@
 
             <div class="form-row-2">
               <div class="form-group">
+                <label class="form-label">Categoría <span class="req">*</span></label>
+                <select class="form-input" name="categoria" [(ngModel)]="formCultivo.categoria" required>
+                  <option value="">Seleccionar...</option>
+                  <option *ngFor="let cat of categoriasCultivo" [value]="cat">{{ categoriaCultivoLabel[cat] }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
                 <label class="form-label">Fecha de siembra <span class="req">*</span></label>
                 <input type="date" class="form-input" name="fechaSiembra" [(ngModel)]="formCultivo.fechaSiembra" required>
               </div>
@@ -662,6 +672,20 @@
             <label>Fecha estimada de entrega *</label>
             <input type="date" [(ngModel)]="formLoteComercial.fechaEntregaEstimada"
                    class="form-control" required />
+          </div>
+
+          <!-- Imagen del producto -->
+          <div class="form-group form-col-full">
+            <label>Imagen del producto (JPG o PNG)</label>
+            <input type="file" accept="image/png,image/jpeg"
+                   (change)="onImagenSeleccionada($event)"
+                   class="form-control" />
+            <small class="form-hint">Máximo 3 MB. Si no subes ninguna, se mostrará una imagen genérica.</small>
+            <div *ngIf="errorImagenLote" class="alert alert-error mt-2">{{ errorImagenLote }}</div>
+            <div class="img-preview-wrapper" *ngIf="formLoteComercial.imagenUrl">
+              <img [src]="formLoteComercial.imagenUrl" alt="Vista previa" class="img-preview" />
+              <button type="button" class="btn-secondary btn-sm" (click)="quitarImagenLote()">Quitar imagen</button>
+            </div>
           </div>
 
           <!-- Condiciones -->

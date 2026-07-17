@@ -34,6 +34,9 @@ public class LotePublicacionRequest {
 
     private String condicionesEntrega;
 
+    /** Opcional: URL de la imagen del lote (ej. link de Google Drive, Imgur, Cloudinary, etc.) */
+    private String imagenUrl;
+
     // ── Getters / Setters ─────────────────────────────────────
     public Long getCultivoId() { return cultivoId; }
     public void setCultivoId(Long cultivoId) { this.cultivoId = cultivoId; }
@@ -49,4 +52,6 @@ public class LotePublicacionRequest {
     public void setFechaEntregaEstimada(LocalDate fechaEntregaEstimada) { this.fechaEntregaEstimada = fechaEntregaEstimada; }
     public String getCondicionesEntrega() { return condicionesEntrega; }
     public void setCondicionesEntrega(String condicionesEntrega) { this.condicionesEntrega = condicionesEntrega; }
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 }

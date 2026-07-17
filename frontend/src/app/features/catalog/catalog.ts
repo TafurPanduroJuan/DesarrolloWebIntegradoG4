@@ -213,6 +213,19 @@ export class Catalog implements OnInit {
     return lote.stockDisponible > 0 && lote.estado === 'ACTIVO';
   }
 
+  imagenSrc(lote: LoteCatalogo): string {
+    return lote.imagenUrl?.trim() || this.imagenFallback(lote.loteId);
+  }
+
+  private imagenFallback(loteId: number): string {
+    return 'assets/img/p' + ((loteId % 6) + 1) + '.jpg';
+  }
+
+  onImgError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = 'assets/img/p1.jpg';
+  }
+
   labelCategoria(cat?: string): string {
     return cat ? (this.categoriaLabel[cat] ?? cat) : '—';
   }

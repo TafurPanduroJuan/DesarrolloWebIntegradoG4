@@ -113,10 +113,11 @@
     <div class="col-12 col-md-6 col-lg-4" *ngFor="let l of lotes">
       <div class="product-card h-100">
 
-        <!-- Imagen placeholder por categoría -->
+        <!-- Imagen del lote (real si el agricultor la subió, si no un placeholder) -->
         <div class="product-img-wrapper">
           <img
-            [src]="'assets/img/p' + ((l.loteId % 6) + 1) + '.jpg'"
+            [src]="imagenSrc(l)"
+            (error)="onImgError($event)"
             [alt]="l.nombreProducto"
             class="product-img"
           />
@@ -199,7 +200,8 @@
 
     <div class="modal-img-wrapper" *ngIf="modalPaso !== 'exito'">
       <img
-        [src]="'assets/img/p' + ((loteSeleccionado.loteId % 6) + 1) + '.jpg'"
+        [src]="imagenSrc(loteSeleccionado)"
+        (error)="onImgError($event)"
         [alt]="loteSeleccionado.nombreProducto"
         class="modal-img"
       />
