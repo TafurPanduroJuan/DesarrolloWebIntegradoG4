@@ -36,6 +36,12 @@ public class Lote {
     private LocalDate fechaEntregaEstimada;
 
     private String condicionesEntrega;
+
+
+    @Lob
+    @Column(name = "imagen_url", columnDefinition = "TEXT")
+    private String imagenUrl;
+
     private Boolean publicado = false;
     private LocalDateTime fechaPublicacion;
 
@@ -64,6 +70,8 @@ public class Lote {
     public void setFechaEntregaEstimada(LocalDate fechaEntregaEstimada) { this.fechaEntregaEstimada = fechaEntregaEstimada; }
     public String getCondicionesEntrega() { return condicionesEntrega; }
     public void setCondicionesEntrega(String condicionesEntrega) { this.condicionesEntrega = condicionesEntrega; }
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
     public Boolean getPublicado() { return publicado; }
     public void setPublicado(Boolean publicado) { this.publicado = publicado; }
     public LocalDateTime getFechaPublicacion() { return fechaPublicacion; }

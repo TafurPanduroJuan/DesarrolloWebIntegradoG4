@@ -24,6 +24,7 @@ export interface LoteCatalogo {
   fechaCosecha?: string;
   condicionesEntrega?: string;
   estado: EstadoLoteComercial;
+  imagenUrl?: string;
 }
 
 // Parámetros de búsqueda del catálogo (todos opcionales)
@@ -52,6 +53,7 @@ export interface LoteComercial {
   publicado: boolean;
   fechaPublicacion?: string;
   estado: EstadoLoteComercial;
+  imagenUrl?: string;
 }
 
 export interface LotePublicacionRequest {
@@ -62,6 +64,7 @@ export interface LotePublicacionRequest {
   unidadMedida: string;
   fechaEntregaEstimada: string;
   condicionesEntrega?: string;
+  imagenUrl?: string;
 }
 
 export interface AjusteStockRequest {

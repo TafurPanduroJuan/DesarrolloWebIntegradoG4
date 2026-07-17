@@ -106,6 +106,7 @@ public class LoteService {
         r.setFechaCosecha(l.getFechaCosecha());
         r.setCondicionesEntrega(l.getCondicionesEntrega());
         r.setEstado(l.getEstado() != null ? l.getEstado().name() : null);
+        r.setImagenUrl(l.getImagenUrl());
 
         cultivoRepository.findById(l.getCultivoId()).ifPresent(c -> {
             r.setNombreProducto(c.getNombreProducto());
@@ -159,6 +160,7 @@ public class LoteService {
         lote.setStockDisponible(req.getCantidadKg()); 
         lote.setFechaEntregaEstimada(req.getFechaEntregaEstimada());
         lote.setCondicionesEntrega(req.getCondicionesEntrega());
+        lote.setImagenUrl(req.getImagenUrl());
         lote.setPublicado(true);
         lote.setFechaPublicacion(LocalDateTime.now());
         lote.setEstado(EstadoLoteEnum.ACTIVO);
@@ -236,7 +238,7 @@ public class LoteService {
                 }
                 break;
             case AJUSTE:
-                // En AJUSTE, 'cantidad' es el nuevo valor absoluto del stock
+                
                 if (req.getCantidad() < 0) {
                     throw new IllegalArgumentException("El stock no puede ser negativo");
                 }
