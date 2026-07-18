@@ -6,6 +6,8 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Auth, UsuarioSesion } from '../auth/services/auth';
 import { AuditoriaService, Auditoria } from './auditoria.service';
+import { ReporteService, ReporteVentas, FiltrosReporte } from './reporte.service';
+import { BackupService, BackupInfo } from './backup.service';
 
 export interface UsuarioAdmin {
   id: number;
@@ -32,6 +34,20 @@ export class IntranetAdmin implements OnInit {
   auditorias: Auditoria[] = [];
   cargandoAuditorias = false;
 
+  // RF-10 / RF-26 — Reportes comerciales
+  reporte: ReporteVentas | null = null;
+  cargandoReporte = false;
+  errorReporte = '';
+  filtroDesde = '';
+  filtroHasta = '';
+  exportando: 'pdf' | 'excel' | null = null;
+
+  // RNF-09 — Backups automáticos
+  backups: BackupInfo[] = [];
+  cargandoBackups = false;
+  ejecutandoBackup = false;
+  mensajeBackup = '';
+
   // Modal de Rechazo (RF-15)
   showRechazoModal = false;
   motivoRechazo = '';
@@ -44,7 +60,9 @@ export class IntranetAdmin implements OnInit {
     private auth: Auth,
     private router: Router,
     private http: HttpClient,
-    private auditoriaService: AuditoriaService
+    private auditoriaService: AuditoriaService,
+    private reporteService: ReporteService,
+    private backupService: BackupService
   ) {}
 
   ngOnInit() {
@@ -67,6 +85,12 @@ export class IntranetAdmin implements OnInit {
     this.seccionActiva.set(seccion);
     if (seccion === 'auditoria') {
       this.cargarAuditorias();
+    }
+    if (seccion === 'reportes' && !this.reporte) {
+      this.cargarReporte();
+    }
+    if (seccion === 'backups') {
+      this.cargarBackups();
     }
   }
 
@@ -158,4 +182,107 @@ export class IntranetAdmin implements OnInit {
   }
   get totalAgricultores() { return this.usuarios.filter(u => u.rol === 'AGRICULTOR').length; }
   get totalCompradores() { return this.usuarios.filter(u => u.rol === 'COMPRADOR').length; }
+
+  // ───────────────────────── RF-10 / RF-26 — Reportes comerciales ─────────────────────────
+
+  private filtrosActuales(): FiltrosReporte {
+    const filtros: FiltrosReporte = {};
+    if (this.filtroDesde) filtros.desde = this.filtroDesde;
+    if (this.filtroHasta) filtros.hasta = this.filtroHasta;
+    return filtros;
+  }
+
+  cargarReporte() {
+    this.cargandoReporte = true;
+    this.errorReporte = '';
+    this.reporteService.getReporteVentas(this.filtrosActuales()).subscribe({
+      next: (data) => {
+        this.reporte = data;
+        this.cargandoReporte = false;
+      },
+      error: () => {
+        this.errorReporte = 'No se pudo generar el reporte comercial.';
+        this.cargandoReporte = false;
+      }
+    });
+  }
+
+  aplicarFiltrosReporte() {
+    this.cargarReporte();
+  }
+
+  limpiarFiltrosReporte() {
+    this.filtroDesde = '';
+    this.filtroHasta = '';
+    this.cargarReporte();
+  }
+
+  exportarReporte(formato: 'pdf' | 'excel') {
+    this.exportando = formato;
+    const extension = formato === 'pdf' ? 'pdf' : 'xlsx';
+    const descarga$ = formato === 'pdf'
+      ? this.reporteService.exportarPdf(this.filtrosActuales())
+      : this.reporteService.exportarExcel(this.filtrosActuales());
+
+    descarga$.subscribe({
+      next: (blob) => {
+        this.reporteService.descargarBlob(blob, `reporte-comercial-agrolink.${extension}`);
+        this.exportando = null;
+      },
+      error: () => {
+        this.errorReporte = `No se pudo exportar el reporte en ${formato.toUpperCase()}.`;
+        this.exportando = null;
+      }
+    });
+  }
+
+  get estadosPedidoReporte(): { estado: string; cantidad: number }[] {
+    if (!this.reporte?.pedidosPorEstado) return [];
+    return Object.entries(this.reporte.pedidosPorEstado).map(([estado, cantidad]) => ({ estado, cantidad }));
+  }
+
+  // ───────────────────────── RNF-09 — Backups automáticos ─────────────────────────
+
+  cargarBackups() {
+    this.cargandoBackups = true;
+    this.backupService.listar().subscribe({
+      next: (data) => {
+        this.backups = data;
+        this.cargandoBackups = false;
+      },
+      error: () => {
+        this.backups = [];
+        this.cargandoBackups = false;
+      }
+    });
+  }
+
+  ejecutarBackupAhora() {
+    this.ejecutandoBackup = true;
+    this.mensajeBackup = '';
+    this.backupService.ejecutarAhora().subscribe({
+      next: (resultado) => {
+        this.mensajeBackup = resultado.mensaje;
+        this.ejecutandoBackup = false;
+        this.cargarBackups();
+      },
+      error: (err) => {
+        this.mensajeBackup = err?.error?.error || 'No se pudo generar el backup.';
+        this.ejecutandoBackup = false;
+      }
+    });
+  }
+
+  descargarBackup(nombre: string) {
+    this.backupService.descargar(nombre).subscribe({
+      next: (blob) => this.reporteService.descargarBlob(blob, nombre),
+      error: () => { this.mensajeBackup = 'No se pudo descargar el backup seleccionado.'; }
+    });
+  }
+
+  formatearTamanio(bytes: number): string {
+    if (!bytes) return '0 KB';
+    const kb = bytes / 1024;
+    return kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(2)} MB`;
+  }
 }

@@ -136,6 +136,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,   "/api/pedidos/**").authenticated()
                 .requestMatchers("/api/auditorias/**").hasRole("ADMINISTRADOR")
                 .requestMatchers("/api/notificaciones/**").authenticated()
+                .requestMatchers("/api/reportes/**").authenticated()
+                .requestMatchers("/api/backups/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.PATCH, "/api/lotes/*/precio").hasAnyRole("AGRICULTOR", "ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET,   "/api/lotes/*/precio-historial").authenticated()
                 .anyRequest().authenticated()

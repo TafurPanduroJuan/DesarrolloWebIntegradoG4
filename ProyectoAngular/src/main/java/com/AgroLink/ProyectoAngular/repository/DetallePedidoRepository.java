@@ -9,4 +9,5 @@ import com.AgroLink.ProyectoAngular.model.DetallePedido;
 public interface DetallePedidoRepository extends JpaRepository<DetallePedido, Long> {
     List<DetallePedido> findByPedidoId(Long pedidoId);
     List<DetallePedido> findByAgricultorId(Long agricultorId);
+    List<DetallePedido> findByPedidoIdIn(List<Long> pedidoIds);
 }
