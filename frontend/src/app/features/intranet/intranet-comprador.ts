@@ -152,6 +152,22 @@ export class IntranetComprador implements OnInit {
     return 'badge-estado-' + String(estado).toLowerCase();
   }
 
+  // ── RF-19 / RF-23: soporte de pedidos parciales (divididos entre varios productores) ──
+  getCantidadTotal(pedido: PedidoResponse): number {
+    if (!pedido.detalles || pedido.detalles.length === 0) return 0;
+    return pedido.detalles.reduce((acc, d) => acc + (d.cantidadSolicitada || 0), 0);
+  }
+
+  getResumenConfirmacion(pedido: PedidoResponse): string {
+    if (!pedido.detalles || pedido.detalles.length === 0) return '';
+    const total = pedido.detalles.length;
+    const confirmados = pedido.detalles.filter(d => d.estadoDetalle === 'CONFIRMADO').length;
+    const cancelados = pedido.detalles.filter(d => d.estadoDetalle === 'CANCELADO').length;
+    if (confirmados === total) return `Los ${total} productores confirmaron su parte`;
+    if (confirmados + cancelados === total) return `${confirmados} de ${total} productores confirmaron (${cancelados} parte(s) rechazada(s))`;
+    return `${confirmados} de ${total} productores han confirmado su parte`;
+  }
+
   cerrarSesion(): void {
     this.auth.logout();
   }
