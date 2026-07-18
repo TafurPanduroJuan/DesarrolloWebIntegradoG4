@@ -51,4 +51,27 @@ public interface LoteRepository extends JpaRepository<Lote, Long> {
         @Param("fechaDesde") String fechaDesde,
         @Param("fechaHasta") String fechaHasta
     );
+
+    /**
+     * RF-19 — Atención de pedidos parciales.
+     * Busca lotes alternativos (de cualquier agricultor) que ofrezcan el mismo
+     * producto y tengan stock disponible, para completar un pedido cuando el
+     * lote originalmente elegido por el comprador no alcanza a cubrirlo.
+     * Se excluye el lote de origen y se ordena por mejor precio y, en empate,
+     * por antigüedad de publicación (FIFO).
+     */
+    @Query(value = """
+        SELECT l.* FROM lote l
+        JOIN cultivo c ON l.cultivo_id = c.id
+        WHERE l.publicado = true
+          AND l.estado = 'ACTIVO'
+          AND l.stock_disponible > 0
+          AND l.id <> :loteExcluidoId
+          AND LOWER(CAST(c.nombre_producto AS text)) = LOWER(:nombreProducto)
+        ORDER BY l.precio_unitario ASC, l.fecha_publicacion ASC
+    """, nativeQuery = true)
+    List<Lote> buscarLotesAlternativosParaProducto(
+        @Param("nombreProducto") String nombreProducto,
+        @Param("loteExcluidoId") Long loteExcluidoId
+    );
 }
