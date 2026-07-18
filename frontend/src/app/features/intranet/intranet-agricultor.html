@@ -101,10 +101,31 @@
         </div>
       </div>
 
-      <!-- Alertas rápidas -->
+      <!-- Alertas rápidas (RF-22) -->
       <div class="alert-box alert-yellow" *ngIf="pedidosPendientes > 0">
         <span class="alert-icon">📋</span>
         <span>Tienes <strong>{{ pedidosPendientes }}</strong> pedido(s) esperando tu confirmación.</span>
+      </div>
+
+      <!-- RF-19: alertas de pedidos nuevos o divididos entre varios productores -->
+      <div class="alert-box alert-yellow" *ngFor="let n of alertasPedidosParciales">
+        <span class="alert-icon">{{ n.tipo === 'PEDIDO_PARCIAL' ? '🔀' : '🛒' }}</span>
+        <span>{{ n.mensaje }}</span>
+      </div>
+
+      <!-- RF-22: alerta de stock bajo por lote -->
+      <div class="alert-box alert-yellow" *ngFor="let lote of lotesConStockBajo">
+        <span class="alert-icon">⚠️</span>
+        <span>
+          Tu lote <strong>#{{ lote.id }}</strong> se está agotando: quedan
+          <strong>{{ lote.stockDisponible }} {{ lote.unidadMedida }}</strong> disponibles.
+          Considera publicar un nuevo lote o hacer un ajuste de stock.
+        </span>
+      </div>
+
+      <div class="alert-box alert-green" *ngIf="pedidosPendientes === 0 && alertasPedidosParciales.length === 0 && lotesConStockBajo.length === 0">
+        <span class="alert-icon">✅</span>
+        <span>No tienes alertas pendientes por el momento.</span>
       </div>
 
       <!-- Cultivos recientes -->
@@ -794,18 +815,24 @@
                   {{ getPedidoEstadoLabel(p.estado) }}
                 </span>
               </div>
+
+              <!-- RF-19 / RF-22: aviso de pedido dividido entre varios productores -->
+              <div class="badge bg-warning text-dark mb-2" *ngIf="p.esParcial" style="font-size: 0.72rem;">
+                <i class="bi bi-diagram-3-fill me-1"></i>Pedido parcial · tu parte + {{ (p.detalles.length || 1) - 1 }} más
+              </div>
+
               <div class="pedido-card-body" *ngIf="p.detalles && p.detalles.length > 0">
                 <div class="product-info-line">
-                  <span class="product-name fw-bold">{{ p.detalles[0].nombreProducto }}</span>
-                  <span class="product-qty text-muted">{{ p.detalles[0].cantidadSolicitada }} {{ p.detalles[0].unidadMedida }}</span>
+                  <span class="product-name fw-bold">{{ miParteDelPedido(p)?.nombreProducto }}</span>
+                  <span class="product-qty text-muted">{{ miParteDelPedido(p)?.cantidadSolicitada }} {{ miParteDelPedido(p)?.unidadMedida }}</span>
                 </div>
                 <div class="date-line text-muted">
                   Fecha: {{ p.fechaPedido | date:'dd/MM/yyyy HH:mm' }}
                 </div>
               </div>
               <div class="pedido-card-footer">
-                <span class="text-muted">Total Estimado:</span>
-                <span class="total-val">S/. {{ p.totalEstimado | number:'1.2-2' }}</span>
+                <span class="text-muted">{{ p.esParcial ? 'Tu subtotal:' : 'Total Estimado:' }}</span>
+                <span class="total-val">S/. {{ (p.esParcial ? miParteDelPedido(p)?.subtotal : p.totalEstimado) | number:'1.2-2' }}</span>
               </div>
             </div>
           </div>
@@ -837,6 +864,24 @@
                 <span class="info-label">Total del Pedido</span>
                 <span class="info-val text-success fw-bold">S/. {{ pedidoDetalle.totalEstimado | number:'1.2-2' }}</span>
               </div>
+            </div>
+          </div>
+
+          <!-- RF-19: Pedido dividido — muestra las otras partes atendidas por otros productores -->
+          <div class="mb-4" *ngIf="pedidoDetalle.esParcial">
+            <h5 class="section-title"><i class="bi bi-diagram-3-fill me-2"></i>Pedido Parcial</h5>
+            <div class="alert alert-warning py-2 px-3 mt-2 mb-2" style="font-size: 0.85rem;">
+              El stock de un solo productor no alcanzaba para cubrir este pedido, así que el comprador
+              está siendo atendido por <strong>{{ pedidoDetalle.detalles.length }} productores</strong>. Tu parte se procesa de forma independiente.
+            </div>
+            <div class="card p-2 bg-light border-0 rounded-3 mt-2" *ngFor="let d of otrasPartesDelPedido(pedidoDetalle)">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted" style="font-size: 0.8rem;">Otro productor · Lote #{{ d.loteId }}</span>
+                <span class="badge-estado" [ngClass]="getPedidoEstadoClase(d.estadoDetalle)" style="font-size: 0.68rem;">
+                  {{ getPedidoEstadoLabel(d.estadoDetalle) }}
+                </span>
+              </div>
+              <span style="font-size: 0.8rem;">{{ d.cantidadSolicitada }} {{ d.unidadMedida }} · S/. {{ d.subtotal | number:'1.2-2' }}</span>
             </div>
           </div>
 
@@ -892,8 +937,8 @@
           <div class="mb-4">
             <h5 class="section-title"><i class="bi bi-gear-fill me-2"></i>Acciones de Estado</h5>
             
-            <!-- PENDIENTE: Aceptar / Rechazar -->
-            <div *ngIf="pedidoDetalle.estado === 'PENDIENTE'" class="d-flex flex-column gap-2 mt-2">
+            <!-- PENDIENTE y con parte propia por resolver: Aceptar / Rechazar -->
+            <div *ngIf="pedidoDetalle.estado === 'PENDIENTE' && tieneMiPartePendiente(pedidoDetalle)" class="d-flex flex-column gap-2 mt-2">
               <button class="btn btn-success w-100 rounded-pill py-2" (click)="confirmarPedido(pedidoDetalle.id)">
                 <i class="bi bi-check-circle-fill me-2"></i>Confirmar Pedido (Aceptar)
               </button>
@@ -905,6 +950,11 @@
                   <i class="bi bi-x-circle-fill me-2"></i>Rechazar Pedido
                 </button>
               </div>
+            </div>
+
+            <!-- Pedido parcial: ya resolviste tu parte, esperando a otros productores -->
+            <div *ngIf="pedidoDetalle.estado === 'PENDIENTE' && !tieneMiPartePendiente(pedidoDetalle)" class="mt-2 text-center text-muted">
+              <em>Ya registraste tu respuesta para este pedido. Se está a la espera de la confirmación de los demás productores.</em>
             </div>
 
             <!-- CONFIRMADO -> PREPARADO -->

@@ -22,8 +22,9 @@ import {
   TipoMovimiento,
   HistorialPrecio
 } from './lote.service';
-import { PedidoService, PedidoResponse, EstadoPedido } from './pedido.service';
+import { PedidoService, PedidoResponse, EstadoPedido, DetallePedidoResp } from './pedido.service';
 import { DatosContactoService, ContactoPedido } from './datos-contacto.service';
+import { NotificacionService, Notificacion } from './notificacion.service';
 
 @Component({
   selector: 'app-intranet-agricultor',
@@ -162,13 +163,18 @@ export class IntranetAgricultor implements OnInit {
   cargandoContacto = false;
   errorContacto = '';
 
+  // ── RF-22: Bloque de alertas del resumen (notificaciones de pedidos parciales/nuevos y stock bajo) ──
+  notificaciones: Notificacion[] = [];
+  private readonly UMBRAL_STOCK_BAJO_PORCENTAJE = 0.15; // 15% del stock original publicado
+
   constructor(
     private auth: Auth,
     private cultivoService: CultivoService,
     private lotes: LoteService,
     private router: Router,
     private pedidoService: PedidoService,
-    private datosContactoService: DatosContactoService
+    private datosContactoService: DatosContactoService,
+    private notificacionService: NotificacionService
   ) {}
 
   ngOnInit() {
@@ -188,6 +194,30 @@ export class IntranetAgricultor implements OnInit {
     });
     this.cargarLotes();
     this.cargarPedidosRecibidos();
+    this.cargarNotificaciones();
+  }
+
+  // ── RF-22: notificaciones para el bloque de alertas del resumen ──
+  cargarNotificaciones(): void {
+    this.notificacionService.getNotificaciones().subscribe({
+      next: (data) => { this.notificaciones = data; },
+      error: () => { this.notificaciones = []; }
+    });
+  }
+
+  // Notificaciones de pedidos nuevos/parciales aún no leídas, para destacarlas en el resumen
+  get alertasPedidosParciales(): Notificacion[] {
+    return this.notificaciones.filter(n => !n.leido && (n.tipo === 'PEDIDO_PARCIAL' || n.tipo === 'NUEVO_PEDIDO'));
+  }
+
+  // Lotes con poco stock restante respecto a lo publicado originalmente (alerta temprana de reabastecimiento)
+  get lotesConStockBajo(): LoteComercial[] {
+    return this.misLotes.filter(l =>
+      l.estado === 'ACTIVO' &&
+      l.stockDisponible > 0 &&
+      l.cantidadKg > 0 &&
+      (l.stockDisponible / l.cantidadKg) <= this.UMBRAL_STOCK_BAJO_PORCENTAJE
+    );
   }
 
   cargarLotes() {
@@ -680,5 +710,21 @@ export class IntranetAgricultor implements OnInit {
 
   getPedidoEstadoClase(estado: string): string {
     return 'badge-estado-' + estado.toLowerCase();
+  }
+
+  // ── RF-19: helpers para pedidos divididos entre varios lotes/agricultores ──
+  miParteDelPedido(pedido: PedidoResponse): DetallePedidoResp | undefined {
+    if (!this.usuario || !pedido.detalles) return undefined;
+    return pedido.detalles.find(d => d.agricultorId === this.usuario!.id) || pedido.detalles[0];
+  }
+
+  otrasPartesDelPedido(pedido: PedidoResponse): DetallePedidoResp[] {
+    if (!this.usuario || !pedido.detalles) return [];
+    return pedido.detalles.filter(d => d.agricultorId !== this.usuario!.id);
+  }
+
+  tieneMiPartePendiente(pedido: PedidoResponse): boolean {
+    if (!this.usuario || !pedido.detalles) return false;
+    return pedido.detalles.some(d => d.agricultorId === this.usuario!.id && d.estadoDetalle === 'PENDIENTE');
   }
 }

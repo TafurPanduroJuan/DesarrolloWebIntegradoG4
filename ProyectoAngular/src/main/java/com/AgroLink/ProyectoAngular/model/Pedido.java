@@ -25,6 +25,11 @@ public class Pedido {
     private LocalDate fechaEntregaEstimada;
     private BigDecimal totalEstimado;
 
+    // RF-19: indica si el pedido tuvo que dividirse entre varios lotes/agricultores
+    // porque el stock de un solo productor no era suficiente para cubrirlo.
+    @Column(name = "es_parcial")
+    private Boolean esParcial = false;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getCompradorId() { return compradorId; }
@@ -39,4 +44,6 @@ public class Pedido {
     public void setFechaEntregaEstimada(LocalDate fechaEntregaEstimada) { this.fechaEntregaEstimada = fechaEntregaEstimada; }
     public BigDecimal getTotalEstimado() { return totalEstimado; }
     public void setTotalEstimado(BigDecimal totalEstimado) { this.totalEstimado = totalEstimado; }
+    public Boolean getEsParcial() { return esParcial; }
+    public void setEsParcial(Boolean esParcial) { this.esParcial = esParcial; }
 }

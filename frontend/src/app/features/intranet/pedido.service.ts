@@ -41,6 +41,7 @@ export interface PedidoResponse {
   fechaPedido: string;
   fechaEntregaEstimada: string;
   totalEstimado: number;
+  esParcial: boolean;
   detalles: DetallePedidoResp[];
   historial: HistorialEstado[];
 }

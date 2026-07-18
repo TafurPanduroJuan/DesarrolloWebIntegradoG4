@@ -134,11 +134,19 @@
                 {{ getEstadoLabel(p.estado) }}
               </span>
             </div>
-            
+
+            <!-- RF-19 / RF-23: aviso de pedido dividido entre varios productores -->
+            <div class="badge bg-warning text-dark mb-2" *ngIf="p.esParcial" style="font-size: 0.72rem;">
+              <i class="bi bi-diagram-3-fill me-1"></i>Pedido parcial · {{ p.detalles.length || 0 }} productores
+            </div>
+
             <div class="pedido-card-body" *ngIf="p.detalles && p.detalles.length > 0">
               <div class="product-info-line">
                 <span class="product-name fw-bold">{{ p.detalles[0].nombreProducto }}</span>
-                <span class="product-qty text-muted">{{ p.detalles[0].cantidadSolicitada }} {{ p.detalles[0].unidadMedida }}</span>
+                <span class="product-qty text-muted">{{ getCantidadTotal(p) }} {{ p.detalles[0].unidadMedida }}</span>
+              </div>
+              <div class="date-line text-muted" *ngIf="p.esParcial">
+                <i class="bi bi-info-circle me-1"></i>{{ getResumenConfirmacion(p) }}
               </div>
               <div class="date-line text-muted">
                 <i class="bi bi-calendar3 me-1"></i> Fecha: {{ p.fechaPedido | date:'dd/MM/yyyy HH:mm' }}
@@ -191,17 +199,31 @@
           <!-- Items del pedido -->
           <div class="detail-section mb-4" *ngIf="pedidoSeleccionado.detalles && pedidoSeleccionado.detalles.length > 0">
             <h5 class="section-title"><i class="bi bi-box-seam-fill me-2"></i>Productos Solicitados</h5>
-            <div class="product-item mt-2">
+
+            <!-- RF-19: aviso de pedido dividido entre varios lotes/productores -->
+            <div class="alert alert-warning py-2 px-3 mt-2 mb-2" style="font-size: 0.85rem;" *ngIf="pedidoSeleccionado.esParcial">
+              <i class="bi bi-diagram-3-fill me-2"></i>
+              Este pedido se dividió entre <strong>{{ pedidoSeleccionado.detalles.length }} productores</strong> porque
+              un solo lote no tenía stock suficiente. {{ getResumenConfirmacion(pedidoSeleccionado) }}.
+            </div>
+
+            <div class="product-item mt-2" *ngFor="let d of pedidoSeleccionado.detalles; let i = index" [class.mb-2]="pedidoSeleccionado.detalles.length > 1">
               <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 border">
                 <div>
-                  <div class="fw-bold">{{ pedidoSeleccionado.detalles[0].nombreProducto }}</div>
-                  <div class="text-muted" style="font-size: 0.82rem;">
-                    Precio unitario: S/. {{ pedidoSeleccionado.detalles[0].precioUnitario | number:'1.2-2' }} / {{ pedidoSeleccionado.detalles[0].unidadMedida }}
+                  <div class="fw-bold">
+                    {{ d.nombreProducto }}
+                    <span *ngIf="pedidoSeleccionado.esParcial" class="text-muted fw-normal" style="font-size: 0.78rem;"> · Lote #{{ d.loteId }}</span>
                   </div>
+                  <div class="text-muted" style="font-size: 0.82rem;">
+                    Precio unitario: S/. {{ d.precioUnitario | number:'1.2-2' }} / {{ d.unidadMedida }}
+                  </div>
+                  <span class="badge-estado d-inline-block mt-1" *ngIf="pedidoSeleccionado.esParcial" [ngClass]="getEstadoClase(d.estadoDetalle)" style="font-size: 0.7rem;">
+                    {{ getEstadoLabel(d.estadoDetalle) }}
+                  </span>
                 </div>
                 <div class="text-end">
-                  <div class="fw-bold">{{ pedidoSeleccionado.detalles[0].cantidadSolicitada }} {{ pedidoSeleccionado.detalles[0].unidadMedida }}</div>
-                  <div class="text-success fw-bold">S/. {{ pedidoSeleccionado.detalles[0].subtotal | number:'1.2-2' }}</div>
+                  <div class="fw-bold">{{ d.cantidadSolicitada }} {{ d.unidadMedida }}</div>
+                  <div class="text-success fw-bold">S/. {{ d.subtotal | number:'1.2-2' }}</div>
                 </div>
               </div>
             </div>
