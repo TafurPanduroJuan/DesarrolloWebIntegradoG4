@@ -13,6 +13,8 @@ public interface LoteRepository extends JpaRepository<Lote, Long> {
 
     List<Lote> findByCultivoId(Long cultivoId);
 
+    List<Lote> findByCultivoIdIn(List<Long> cultivoIds);
+
     List<Lote> findByPublicadoTrue();
 
     /**

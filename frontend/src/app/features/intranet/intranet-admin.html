@@ -29,6 +29,12 @@
       <button class="nav-item" [class.active]="seccionActiva() === 'auditoria'" (click)="irA('auditoria')">
         <span class="nav-icon">📜</span> Bitácora Auditoría
       </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'reportes'" (click)="irA('reportes')">
+        <span class="nav-icon">📈</span> Reportes Comerciales
+      </button>
+      <button class="nav-item" [class.active]="seccionActiva() === 'backups'" (click)="irA('backups')">
+        <span class="nav-icon">💾</span> Backups
+      </button>
     </nav>
 
     <div class="sidebar-footer">
@@ -50,6 +56,8 @@
         <h1 *ngIf="seccionActiva() === 'solicitudes'">👨‍🌾 Solicitudes de Agricultores</h1>
         <h1 *ngIf="seccionActiva() === 'usuarios'">👥 Gestión de Usuarios</h1>
         <h1 *ngIf="seccionActiva() === 'auditoria'">📜 Bitácora de Auditoría</h1>
+        <h1 *ngIf="seccionActiva() === 'reportes'">📈 Reportes Comerciales</h1>
+        <h1 *ngIf="seccionActiva() === 'backups'">💾 Backups de la Base de Datos</h1>
       </div>
       <div class="header-badge-admin">🛡️ Vista Administrador</div>
     </header>
@@ -227,6 +235,150 @@
               <td>{{ aud.descripcion }}</td>
               <td><small>{{ aud.usuarioEmail || 'SYSTEM/ANONYMOUS' }}</small></td>
               <td><code class="small text-muted">{{ aud.ipAddress }}</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== REPORTES COMERCIALES (RF-10 / RF-26) ===== -->
+    <section *ngIf="seccionActiva() === 'reportes'" class="content-section">
+      <div class="table-header">
+        <h2>Historial y Reportes Comerciales</h2>
+        <span class="table-count" *ngIf="reporte">Alcance: {{ reporte.alcance }}</span>
+      </div>
+
+      <div class="filtros-reporte" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom: 18px;">
+        <div class="form-group">
+          <label class="fw-semibold small text-dark d-block mb-1">Desde</label>
+          <input type="date" class="form-control" [(ngModel)]="filtroDesde" style="border:1px solid #d1d5db; border-radius:8px; padding:8px 10px;">
+        </div>
+        <div class="form-group">
+          <label class="fw-semibold small text-dark d-block mb-1">Hasta</label>
+          <input type="date" class="form-control" [(ngModel)]="filtroHasta" style="border:1px solid #d1d5db; border-radius:8px; padding:8px 10px;">
+        </div>
+        <button class="btn btn-success rounded-pill px-4" (click)="aplicarFiltrosReporte()">Aplicar filtros</button>
+        <button class="btn btn-outline-secondary rounded-pill px-4" (click)="limpiarFiltrosReporte()">Limpiar</button>
+        <div style="margin-left:auto; display:flex; gap:10px;">
+          <button class="btn btn-outline-danger rounded-pill px-3" [disabled]="exportando === 'pdf'" (click)="exportarReporte('pdf')">
+            {{ exportando === 'pdf' ? 'Generando PDF...' : '📄 Exportar PDF' }}
+          </button>
+          <button class="btn btn-outline-success rounded-pill px-3" [disabled]="exportando === 'excel'" (click)="exportarReporte('excel')">
+            {{ exportando === 'excel' ? 'Generando Excel...' : '📊 Exportar Excel' }}
+          </button>
+        </div>
+      </div>
+
+      <p *ngIf="cargandoReporte" class="loading-text">Generando reporte...</p>
+      <div *ngIf="errorReporte" class="alert alert-danger py-2 px-3 small" style="border-radius:8px;">{{ errorReporte }}</div>
+
+      <ng-container *ngIf="!cargandoReporte && reporte">
+        <div class="kpi-grid">
+          <div class="kpi-card kpi-green">
+            <span class="kpi-label">Total de pedidos</span>
+            <span class="kpi-value">{{ reporte.totalPedidos }}</span>
+          </div>
+          <div class="kpi-card kpi-green">
+            <span class="kpi-label">Total ingresos confirmados</span>
+            <span class="kpi-value">S/ {{ reporte.totalIngresos | number:'1.2-2' }}</span>
+          </div>
+          <div class="kpi-card kpi-green" *ngFor="let e of estadosPedidoReporte">
+            <span class="kpi-label">Pedidos {{ e.estado }}</span>
+            <span class="kpi-value">{{ e.cantidad }}</span>
+          </div>
+        </div>
+
+        <h3 style="margin-top:24px;">Ventas por producto</h3>
+        <p *ngIf="reporte.ventasPorProducto.length === 0" class="empty-state-sm">Sin ventas confirmadas en el periodo.</p>
+        <div class="table-wrapper" *ngIf="reporte.ventasPorProducto.length > 0">
+          <table class="data-table">
+            <thead>
+              <tr><th>Producto</th><th>Categoría</th><th>Kg vendidos</th><th>Monto (S/)</th><th>N° Pedidos</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let v of reporte.ventasPorProducto">
+                <td>{{ v.nombreProducto }}</td>
+                <td>{{ v.categoria }}</td>
+                <td>{{ v.cantidadVendidaKg | number:'1.2-2' }}</td>
+                <td>S/ {{ v.montoTotal | number:'1.2-2' }}</td>
+                <td>{{ v.numeroPedidos }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-container *ngIf="reporte.ventasPorAgricultor.length > 0">
+          <h3 style="margin-top:24px;">Ventas por agricultor</h3>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr><th>Agricultor</th><th>N° Pedidos</th><th>Monto (S/)</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let v of reporte.ventasPorAgricultor">
+                  <td>{{ v.nombreAgricultor }}</td>
+                  <td>{{ v.numeroPedidos }}</td>
+                  <td>S/ {{ v.montoTotal | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+
+        <h3 style="margin-top:24px;">Cambios de precio en el periodo (RF-20)</h3>
+        <p *ngIf="reporte.cambiosPrecio.length === 0" class="empty-state-sm">Sin cambios de precio en el periodo.</p>
+        <div class="table-wrapper" *ngIf="reporte.cambiosPrecio.length > 0">
+          <table class="data-table">
+            <thead>
+              <tr><th>Lote</th><th>Precio anterior</th><th>Precio nuevo</th><th>Responsable</th><th>Fecha</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of reporte.cambiosPrecio">
+                <td>{{ c.loteId }}</td>
+                <td>S/ {{ c.precioAnterior | number:'1.2-2' }}</td>
+                <td>S/ {{ c.precioNuevo | number:'1.2-2' }}</td>
+                <td><small>{{ c.usuarioResponsableEmail }}</small></td>
+                <td style="white-space: nowrap;">{{ c.fechaCambio | date:'dd/MM/yyyy HH:mm' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+    </section>
+
+    <!-- ===== BACKUPS AUTOMÁTICOS (RNF-09) ===== -->
+    <section *ngIf="seccionActiva() === 'backups'" class="content-section">
+      <div class="table-header">
+        <h2>Backups Automáticos de PostgreSQL</h2>
+        <span class="table-count">{{ backups.length }} respaldos disponibles</span>
+      </div>
+
+      <p class="text-muted small mb-3">
+        El sistema genera un backup automático todos los días a las 3:00 a.m. Se conservan los últimos 7 respaldos.
+        También puedes generar uno manualmente cuando lo necesites.
+      </p>
+
+      <button class="btn btn-success rounded-pill px-4 mb-3" [disabled]="ejecutandoBackup" (click)="ejecutarBackupAhora()">
+        {{ ejecutandoBackup ? 'Generando backup...' : '💾 Ejecutar backup ahora' }}
+      </button>
+      <div *ngIf="mensajeBackup" class="alert alert-info py-2 px-3 small" style="border-radius:8px;">{{ mensajeBackup }}</div>
+
+      <p *ngIf="cargandoBackups" class="loading-text">Cargando backups...</p>
+      <p *ngIf="!cargandoBackups && backups.length === 0" class="empty-state-sm">Aún no se han generado backups.</p>
+
+      <div class="table-wrapper" *ngIf="!cargandoBackups && backups.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr><th>Archivo</th><th>Fecha</th><th>Tamaño</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of backups">
+              <td><code class="small">{{ b.nombre }}</code></td>
+              <td style="white-space: nowrap;">{{ b.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ formatearTamanio(b.tamanioBytes) }}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-success rounded-pill" (click)="descargarBackup(b.nombre)">⬇️ Descargar</button>
+              </td>
             </tr>
           </tbody>
         </table>
