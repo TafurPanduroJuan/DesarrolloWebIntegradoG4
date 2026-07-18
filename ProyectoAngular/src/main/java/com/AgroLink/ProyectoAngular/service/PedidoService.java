@@ -10,8 +10,12 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
 import com.AgroLink.ProyectoAngular.dto.PedidoRequest;
 import com.AgroLink.ProyectoAngular.dto.PedidoResponse;
+import com.AgroLink.ProyectoAngular.model.Cultivo;
 import com.AgroLink.ProyectoAngular.model.DetallePedido;
 import com.AgroLink.ProyectoAngular.model.HistorialEstadoPedido;
 import com.AgroLink.ProyectoAngular.model.Lote;
@@ -21,6 +25,7 @@ import com.AgroLink.ProyectoAngular.model.enums.EstadoPedidoEnum;
 import com.AgroLink.ProyectoAngular.repository.CultivoRepository;
 import com.AgroLink.ProyectoAngular.repository.DetallePedidoRepository;
 import com.AgroLink.ProyectoAngular.repository.HistorialEstadoPedidoRepository;
+import com.AgroLink.ProyectoAngular.repository.LoteRepository;
 import com.AgroLink.ProyectoAngular.repository.PedidoRepository;
 import com.AgroLink.ProyectoAngular.service.AuditoriaService;
 import com.AgroLink.ProyectoAngular.service.NotificacionService;
@@ -38,6 +43,7 @@ public class PedidoService {
     private final DetallePedidoRepository detalleRepository;
     private final HistorialEstadoPedidoRepository historialRepository;
     private final LoteService loteService;
+    private final LoteRepository loteRepository;
     private final CultivoRepository cultivoRepository;
     private final AuditoriaService auditoriaService;
     private final NotificacionService notificacionService;
@@ -46,6 +52,7 @@ public class PedidoService {
                          DetallePedidoRepository detalleRepository,
                          HistorialEstadoPedidoRepository historialRepository,
                          LoteService loteService,
+                         LoteRepository loteRepository,
                          CultivoRepository cultivoRepository,
                          AuditoriaService auditoriaService,
                          NotificacionService notificacionService) {
@@ -53,6 +60,7 @@ public class PedidoService {
         this.detalleRepository   = detalleRepository;
         this.historialRepository = historialRepository;
         this.loteService         = loteService;
+        this.loteRepository      = loteRepository;
         this.cultivoRepository   = cultivoRepository;
         this.auditoriaService    = auditoriaService;
         this.notificacionService = notificacionService;
@@ -69,22 +77,51 @@ public class PedidoService {
             throw new IllegalArgumentException("Debe especificar un lote");
         }
 
-        Lote lote = loteService.buscarPorId(req.getLoteId());
-        if (lote == null) {
+        Lote loteOrigen = loteService.buscarPorId(req.getLoteId());
+        if (loteOrigen == null) {
             throw new IllegalArgumentException("Lote no encontrado: " + req.getLoteId());
         }
-        if (lote.getStockDisponible() < req.getCantidadSolicitada()) {
-            throw new IllegalStateException(
-                "Stock insuficiente. Disponible: " + lote.getStockDisponible() +
-                ", solicitado: " + req.getCantidadSolicitada());
-        }
 
-        Long agricultorId = cultivoRepository.findById(lote.getCultivoId())
-            .map(c -> c.getAgricultorId())
+        Cultivo cultivoOrigen = cultivoRepository.findById(loteOrigen.getCultivoId())
             .orElseThrow(() -> new IllegalStateException("Cultivo no encontrado para el lote"));
 
-        BigDecimal precioUnitario = lote.getPrecioUnitario();
-        BigDecimal subtotal = precioUnitario.multiply(BigDecimal.valueOf(req.getCantidadSolicitada()));
+        double cantidadRestante = req.getCantidadSolicitada();
+
+        // ── RF-19: Atención de pedidos parciales ──────────────────────────
+        // Estructura de asignación: lote -> cantidad tomada de ese lote.
+        // Se arma primero con el lote elegido por el comprador; si no alcanza,
+        // se completa con otros lotes ACTIVOS del mismo producto (de cualquier
+        // agricultor), priorizando mejor precio y mayor antigüedad de publicación.
+        LinkedHashMap<Lote, Double> asignaciones = new LinkedHashMap<>();
+
+        double tomadoDelOrigen = Math.min(loteOrigen.getStockDisponible(), cantidadRestante);
+        if (tomadoDelOrigen > 0) {
+            asignaciones.put(loteOrigen, tomadoDelOrigen);
+            cantidadRestante -= tomadoDelOrigen;
+        }
+
+        if (cantidadRestante > 0) {
+            List<Lote> alternativos = loteRepository.buscarLotesAlternativosParaProducto(
+                cultivoOrigen.getNombreProducto(), loteOrigen.getId());
+
+            for (Lote alterno : alternativos) {
+                if (cantidadRestante <= 0) break;
+                double disponible = alterno.getStockDisponible() != null ? alterno.getStockDisponible() : 0;
+                if (disponible <= 0) continue;
+                double aTomar = Math.min(disponible, cantidadRestante);
+                asignaciones.put(alterno, aTomar);
+                cantidadRestante -= aTomar;
+            }
+        }
+
+        if (cantidadRestante > 0) {
+            throw new IllegalStateException(
+                "Stock insuficiente entre todos los productores disponibles. Faltan " +
+                cantidadRestante + " " + (loteOrigen.getUnidadMedida() != null ? loteOrigen.getUnidadMedida() : "kg") +
+                " para completar el pedido.");
+        }
+
+        boolean esPedidoParcial = asignaciones.size() > 1;
 
         Pedido pedido = new Pedido();
         pedido.setCompradorId(req.getCompradorId());
@@ -92,28 +129,67 @@ public class PedidoService {
         pedido.setNotasEspeciales(req.getNotasEspeciales());
         pedido.setFechaPedido(LocalDateTime.now());
         pedido.setFechaEntregaEstimada(req.getFechaEntregaDeseada());
-        pedido.setTotalEstimado(subtotal);
+        pedido.setEsParcial(esPedidoParcial);
         Pedido pedidoGuardado = pedidoRepository.save(pedido);
 
-        DetallePedido detalle = new DetallePedido();
-        detalle.setPedidoId(pedidoGuardado.getId());
-        detalle.setLoteId(lote.getId());
-        detalle.setAgricultorId(agricultorId);
-        detalle.setCantidadSolicitada(req.getCantidadSolicitada());
-        detalle.setPrecioUnitario(precioUnitario);
-        detalle.setSubtotal(subtotal);
-        detalle.setEstadoDetalle(EstadoDetalleEnum.PENDIENTE);
-        detalleRepository.save(detalle);
+        BigDecimal totalEstimado = BigDecimal.ZERO;
+        List<DetallePedido> detallesCreados = new ArrayList<>();
 
-        registrarHistorial(pedidoGuardado.getId(), null, EstadoPedidoEnum.PENDIENTE, "Pedido creado");
+        for (Map.Entry<Lote, Double> entry : asignaciones.entrySet()) {
+            Lote lote = entry.getKey();
+            Double cantidad = entry.getValue();
+            Long agricultorId = cultivoRepository.findById(lote.getCultivoId())
+                .map(Cultivo::getAgricultorId)
+                .orElseThrow(() -> new IllegalStateException("Cultivo no encontrado para el lote " + lote.getId()));
 
-        // RF-24: Notificación nuevo pedido al agricultor
-        notificacionService.enviarNotificacion(
-            agricultorId,
-            "Nuevo pedido #" + pedidoGuardado.getId() + " recibido para tu lote por una cantidad de " + req.getCantidadSolicitada() + " " + (lote.getUnidadMedida() != null ? lote.getUnidadMedida() : "kg"),
-            "NUEVO_PEDIDO",
-            pedidoGuardado.getId()
-        );
+            BigDecimal precioUnitario = lote.getPrecioUnitario();
+            BigDecimal subtotal = precioUnitario.multiply(BigDecimal.valueOf(cantidad));
+            totalEstimado = totalEstimado.add(subtotal);
+
+            DetallePedido detalle = new DetallePedido();
+            detalle.setPedidoId(pedidoGuardado.getId());
+            detalle.setLoteId(lote.getId());
+            detalle.setAgricultorId(agricultorId);
+            detalle.setCantidadSolicitada(cantidad);
+            detalle.setPrecioUnitario(precioUnitario);
+            detalle.setSubtotal(subtotal);
+            detalle.setEstadoDetalle(EstadoDetalleEnum.PENDIENTE);
+            detalleRepository.save(detalle);
+            detallesCreados.add(detalle);
+
+            // RF-24: Notificación nuevo pedido (o parte de un pedido dividido) al agricultor
+            String unidad = lote.getUnidadMedida() != null ? lote.getUnidadMedida() : "kg";
+            String mensajeAgricultor = esPedidoParcial
+                ? "Nuevo pedido parcial #" + pedidoGuardado.getId() + " recibido para tu lote (" + cantidad + " " + unidad + "). El comprador solicitó una cantidad mayor a la disponible en un solo lote, por lo que el pedido se dividió entre varios productores."
+                : "Nuevo pedido #" + pedidoGuardado.getId() + " recibido para tu lote por una cantidad de " + cantidad + " " + unidad;
+
+            notificacionService.enviarNotificacion(
+                agricultorId,
+                mensajeAgricultor,
+                esPedidoParcial ? "PEDIDO_PARCIAL" : "NUEVO_PEDIDO",
+                pedidoGuardado.getId()
+            );
+        }
+
+        pedido.setTotalEstimado(totalEstimado);
+        pedidoRepository.save(pedido);
+
+        String obsHistorial = esPedidoParcial
+            ? "Pedido creado y dividido automáticamente entre " + asignaciones.size() + " lotes/agricultores por falta de stock en un solo productor."
+            : "Pedido creado";
+        registrarHistorial(pedidoGuardado.getId(), null, EstadoPedidoEnum.PENDIENTE, obsHistorial);
+
+        // RF-24 / RF-19: Notificación al comprador si su pedido tuvo que dividirse
+        if (esPedidoParcial) {
+            notificacionService.enviarNotificacion(
+                req.getCompradorId(),
+                "Tu pedido #" + pedidoGuardado.getId() + " de " + cultivoOrigen.getNombreProducto() +
+                " fue dividido entre " + asignaciones.size() + " productores porque un solo lote no tenía stock suficiente. " +
+                "Cada agricultor deberá confirmar su parte por separado.",
+                "PEDIDO_PARCIAL",
+                pedidoGuardado.getId()
+            );
+        }
 
         return toResponse(pedidoGuardado);
     }
@@ -125,31 +201,59 @@ public class PedidoService {
         Pedido pedido = obtenerPedidoOFallar(pedidoId);
         validarEstado(pedido, EstadoPedidoEnum.PENDIENTE, "confirmar");
 
-        List<DetallePedido> detalles = detalleRepository.findByPedidoId(pedidoId).stream()
-            .filter(d -> d.getAgricultorId().equals(agricultorId))
+        List<DetallePedido> todosLosDetalles = detalleRepository.findByPedidoId(pedidoId);
+        List<DetallePedido> misDetalles = todosLosDetalles.stream()
+            .filter(d -> d.getAgricultorId().equals(agricultorId) && d.getEstadoDetalle() == EstadoDetalleEnum.PENDIENTE)
             .collect(Collectors.toList());
-        if (detalles.isEmpty()) {
-            throw new IllegalArgumentException("No tienes items en este pedido");
+        if (misDetalles.isEmpty()) {
+            throw new IllegalArgumentException("No tienes items pendientes en este pedido");
         }
 
-        for (DetallePedido d : detalles) {
+        for (DetallePedido d : misDetalles) {
             loteService.confirmarPedido(d.getLoteId(), d.getCantidadSolicitada());
             d.setEstadoDetalle(EstadoDetalleEnum.CONFIRMADO);
             detalleRepository.save(d);
         }
 
-        pedido.setEstado(EstadoPedidoEnum.CONFIRMADO);
-        pedidoRepository.save(pedido);
-        registrarHistorial(pedidoId, EstadoPedidoEnum.PENDIENTE, EstadoPedidoEnum.CONFIRMADO,
-                "Pedido confirmado por el agricultor");
+        // RF-19: en un pedido dividido, el estado general solo avanza cuando
+        // todos los agricultores involucrados hayan resuelto su parte.
+        boolean esParcial = Boolean.TRUE.equals(pedido.getEsParcial());
+        EstadoResolucion resolucion = resolverEstadoDetalles(todosLosDetalles);
 
-        // RF-24: Notificación de confirmación al comprador
-        notificacionService.enviarNotificacion(
-            pedido.getCompradorId(),
-            "Tu pedido #" + pedido.getId() + " ha sido confirmado por el agricultor.",
-            "CONFIRMACION",
-            pedido.getId()
-        );
+        if (resolucion.pendientes == 0) {
+            EstadoPedidoEnum nuevoEstado = resolucion.confirmados > 0
+                ? EstadoPedidoEnum.CONFIRMADO
+                : EstadoPedidoEnum.RECHAZADO;
+            pedido.setEstado(nuevoEstado);
+            pedidoRepository.save(pedido);
+            registrarHistorial(pedidoId, EstadoPedidoEnum.PENDIENTE, nuevoEstado,
+                    "Pedido confirmado por el agricultor ID: " + agricultorId +
+                    (esParcial ? " (todas las partes del pedido dividido fueron resueltas)" : ""));
+
+            // RF-24: Notificación de confirmación final al comprador
+            notificacionService.enviarNotificacion(
+                pedido.getCompradorId(),
+                nuevoEstado == EstadoPedidoEnum.CONFIRMADO
+                    ? "Tu pedido #" + pedido.getId() + " ha sido confirmado" + (esParcial ? " en su totalidad por todos los productores." : " por el agricultor.")
+                    : "Tu pedido #" + pedido.getId() + " no pudo confirmarse: ningún productor aceptó su parte.",
+                "CONFIRMACION",
+                pedido.getId()
+            );
+        } else {
+            // Aún faltan otros agricultores por resolver su parte del pedido.
+            registrarHistorial(pedidoId, EstadoPedidoEnum.PENDIENTE, EstadoPedidoEnum.PENDIENTE,
+                    "El agricultor ID: " + agricultorId + " confirmó su parte del pedido dividido " +
+                    "(" + resolucion.confirmados + " de " + todosLosDetalles.size() + " partes confirmadas).");
+
+            notificacionService.enviarNotificacion(
+                pedido.getCompradorId(),
+                "Un productor confirmó su parte de tu pedido parcial #" + pedido.getId() + " (" +
+                resolucion.confirmados + " de " + todosLosDetalles.size() + " partes confirmadas). " +
+                "Aún esperamos la respuesta de los demás productores.",
+                "PEDIDO_PARCIAL",
+                pedido.getId()
+            );
+        }
 
         // RF-27: Auditoría de confirmación de pedido
         auditoriaService.registrarAuditoria("CONFIRMACION_PEDIDO",
@@ -165,32 +269,75 @@ public class PedidoService {
         Pedido pedido = obtenerPedidoOFallar(pedidoId);
         validarEstado(pedido, EstadoPedidoEnum.PENDIENTE, "rechazar");
 
-        List<DetallePedido> detalles = detalleRepository.findByPedidoId(pedidoId).stream()
-            .filter(d -> d.getAgricultorId().equals(agricultorId))
+        List<DetallePedido> todosLosDetalles = detalleRepository.findByPedidoId(pedidoId);
+        List<DetallePedido> misDetalles = todosLosDetalles.stream()
+            .filter(d -> d.getAgricultorId().equals(agricultorId) && d.getEstadoDetalle() == EstadoDetalleEnum.PENDIENTE)
             .collect(Collectors.toList());
-        if (detalles.isEmpty()) {
-            throw new IllegalArgumentException("No tienes items en este pedido");
+        if (misDetalles.isEmpty()) {
+            throw new IllegalArgumentException("No tienes items pendientes en este pedido");
         }
 
-        for (DetallePedido d : detalles) {
+        for (DetallePedido d : misDetalles) {
             d.setEstadoDetalle(EstadoDetalleEnum.CANCELADO);
             detalleRepository.save(d);
         }
 
-        pedido.setEstado(EstadoPedidoEnum.RECHAZADO);
-        pedidoRepository.save(pedido);
         String obs = (motivo != null && !motivo.isBlank()) ? motivo : "Pedido rechazado por el agricultor";
-        registrarHistorial(pedidoId, EstadoPedidoEnum.PENDIENTE, EstadoPedidoEnum.RECHAZADO, obs);
+        boolean esParcial = Boolean.TRUE.equals(pedido.getEsParcial());
 
-        // RF-24: Notificación de rechazo al comprador
-        notificacionService.enviarNotificacion(
-            pedido.getCompradorId(),
-            "Tu pedido #" + pedido.getId() + " ha sido rechazado por el agricultor. Motivo: " + obs,
-            "RECHAZO",
-            pedido.getId()
-        );
+        // RF-19: en un pedido dividido, rechazar la parte de un agricultor no
+        // rechaza automáticamente las partes de los demás productores.
+        EstadoResolucion resolucion = resolverEstadoDetalles(todosLosDetalles);
+
+        if (resolucion.pendientes == 0) {
+            EstadoPedidoEnum nuevoEstado = resolucion.confirmados > 0
+                ? EstadoPedidoEnum.CONFIRMADO
+                : EstadoPedidoEnum.RECHAZADO;
+            pedido.setEstado(nuevoEstado);
+            pedidoRepository.save(pedido);
+            registrarHistorial(pedidoId, EstadoPedidoEnum.PENDIENTE, nuevoEstado, obs);
+
+            notificacionService.enviarNotificacion(
+                pedido.getCompradorId(),
+                nuevoEstado == EstadoPedidoEnum.RECHAZADO
+                    ? "Tu pedido #" + pedido.getId() + " ha sido rechazado por el agricultor. Motivo: " + obs
+                    : "Tu pedido parcial #" + pedido.getId() + " quedó confirmado con las partes que sí fueron aceptadas. Un productor rechazó su parte. Motivo: " + obs,
+                "RECHAZO",
+                pedido.getId()
+            );
+        } else {
+            registrarHistorial(pedidoId, EstadoPedidoEnum.PENDIENTE, EstadoPedidoEnum.PENDIENTE,
+                    "El agricultor ID: " + agricultorId + " rechazó su parte del pedido dividido. Motivo: " + obs);
+
+            notificacionService.enviarNotificacion(
+                pedido.getCompradorId(),
+                "Un productor rechazó su parte de tu pedido parcial #" + pedido.getId() + ". Motivo: " + obs +
+                ". Aún esperamos la respuesta de los demás productores.",
+                "PEDIDO_PARCIAL",
+                pedido.getId()
+            );
+        }
 
         return toResponse(pedido);
+    }
+
+    /** Pequeño resumen de cuántos detalles de un pedido están confirmados / cancelados / pendientes. */
+    private static class EstadoResolucion {
+        int confirmados;
+        int cancelados;
+        int pendientes;
+    }
+
+    private EstadoResolucion resolverEstadoDetalles(List<DetallePedido> detalles) {
+        EstadoResolucion r = new EstadoResolucion();
+        for (DetallePedido d : detalles) {
+            switch (d.getEstadoDetalle()) {
+                case CONFIRMADO -> r.confirmados++;
+                case CANCELADO -> r.cancelados++;
+                default -> r.pendientes++;
+            }
+        }
+        return r;
     }
 
     // -- RF08: Cambio de estado con historial ----------------------
@@ -307,6 +454,7 @@ public class PedidoService {
         r.setFechaPedido(p.getFechaPedido());
         r.setFechaEntregaEstimada(p.getFechaEntregaEstimada());
         r.setTotalEstimado(p.getTotalEstimado());
+        r.setEsParcial(Boolean.TRUE.equals(p.getEsParcial()));
 
         List<DetallePedido> detalles = detalleRepository.findByPedidoId(p.getId());
         r.setDetalles(detalles.stream().map(d -> {

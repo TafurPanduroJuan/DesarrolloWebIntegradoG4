@@ -14,6 +14,7 @@ public class PedidoResponse {
     private LocalDateTime fechaPedido;
     private LocalDate fechaEntregaEstimada;
     private BigDecimal totalEstimado;
+    private Boolean esParcial;
     private List<DetalleResponse> detalles;
     private List<HistorialResponse> historial;
 
@@ -31,6 +32,8 @@ public class PedidoResponse {
     public void setFechaEntregaEstimada(LocalDate fechaEntregaEstimada) { this.fechaEntregaEstimada = fechaEntregaEstimada; }
     public BigDecimal getTotalEstimado() { return totalEstimado; }
     public void setTotalEstimado(BigDecimal totalEstimado) { this.totalEstimado = totalEstimado; }
+    public Boolean getEsParcial() { return esParcial; }
+    public void setEsParcial(Boolean esParcial) { this.esParcial = esParcial; }
     public List<DetalleResponse> getDetalles() { return detalles; }
     public void setDetalles(List<DetalleResponse> detalles) { this.detalles = detalles; }
     public List<HistorialResponse> getHistorial() { return historial; }
