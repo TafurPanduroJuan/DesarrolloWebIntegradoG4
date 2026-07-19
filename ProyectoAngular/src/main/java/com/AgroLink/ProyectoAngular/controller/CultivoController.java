@@ -77,6 +77,14 @@ public class CultivoController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('AGRICULTOR')")
     public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Cultivo cultivo) {
+        Cultivo existente = cultivoService.buscarPorId(id);
+        if (existente == null) return ResponseEntity.notFound().build();
+        if (!esPropietario(existente)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Este cultivo no te pertenece"));
+        }
+        // El agricultorId de un cultivo nunca cambia por esta vía.
+        cultivo.setAgricultorId(existente.getAgricultorId());
         try {
             return ResponseEntity.ok(cultivoService.actualizar(id, cultivo));
         } catch (IllegalArgumentException e) {
@@ -88,6 +96,12 @@ public class CultivoController {
     @PreAuthorize("hasRole('AGRICULTOR')")
     public ResponseEntity<?> actualizarSeguimiento(@PathVariable Long id,
                                                     @Valid @RequestBody SeguimientoRequest req) {
+        Cultivo existente = cultivoService.buscarPorId(id);
+        if (existente == null) return ResponseEntity.notFound().build();
+        if (!esPropietario(existente)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Este cultivo no te pertenece"));
+        }
         try {
             return ResponseEntity.ok(cultivoService.actualizarSeguimiento(id, req));
         } catch (IllegalArgumentException e) {
@@ -97,9 +111,21 @@ public class CultivoController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('AGRICULTOR')")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        if (cultivoService.buscarPorId(id) == null) return ResponseEntity.notFound().build();
+    public ResponseEntity<?> eliminar(@PathVariable Long id) {
+        Cultivo existente = cultivoService.buscarPorId(id);
+        if (existente == null) return ResponseEntity.notFound().build();
+        if (!esPropietario(existente)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Este cultivo no te pertenece"));
+        }
         cultivoService.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /** RF04/RF09 - un agricultor solo puede modificar sus propios cultivos. */
+    private boolean esPropietario(Cultivo cultivo) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario yo = usuarioService.buscarPorEmail(email);
+        return yo != null && yo.getId().equals(cultivo.getAgricultorId());
     }
 }

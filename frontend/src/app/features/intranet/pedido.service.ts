@@ -68,15 +68,15 @@ export class PedidoService {
     return this.http.get<PedidoResponse[]>(`${this.API}/agricultor/${agricultorId}`);
   }
 
-  confirmarPedido(pedidoId: number, agricultorId: number): Observable<PedidoResponse> {
-    return this.http.patch<PedidoResponse>(
-      `${this.API}/${pedidoId}/confirmar?agricultorId=${agricultorId}`, {}
-    );
+  // El agricultor que confirma/rechaza siempre es el usuario autenticado;
+  // el backend lo obtiene del JWT, no hace falta (ni se debe) enviarlo aquí.
+  confirmarPedido(pedidoId: number): Observable<PedidoResponse> {
+    return this.http.patch<PedidoResponse>(`${this.API}/${pedidoId}/confirmar`, {});
   }
 
-  rechazarPedido(pedidoId: number, agricultorId: number, motivo: string): Observable<PedidoResponse> {
+  rechazarPedido(pedidoId: number, motivo: string): Observable<PedidoResponse> {
     return this.http.patch<PedidoResponse>(
-      `${this.API}/${pedidoId}/rechazar`, { agricultorId, motivo }
+      `${this.API}/${pedidoId}/rechazar`, { motivo }
     );
   }
 
