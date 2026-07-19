@@ -8,6 +8,8 @@ import { Register } from './features/auth/components/register/register';
 import { Dashboard } from './features/dashboard/dashboard';
 import { authGuard } from './shared/guards/auth.guard';
 import { adminGuard } from './shared/guards/admin.guard';
+import { agricultorGuard } from './shared/guards/agricultor.guard';
+import { compradorGuard } from './shared/guards/comprador.guard';
 import { IntranetRedirect } from './features/intranet/intranet-redirect';
 import { IntranetAgricultor } from './features/intranet/intranet-agricultor';
 import { IntranetAdmin } from './features/intranet/intranet-admin';
@@ -23,7 +25,7 @@ export const routes: Routes = [
   { path: 'dashboard',     component: Dashboard,           canActivate: [authGuard] },
   // ── INTRANET ──────────────────────────────────────────
   { path: 'intranet',           component: IntranetRedirect,    canActivate: [authGuard] },
-  { path: 'intranet/agricultor', component: IntranetAgricultor, canActivate: [authGuard] },
-  { path: 'intranet/comprador',  component: IntranetComprador,  canActivate: [authGuard] },
+  { path: 'intranet/agricultor', component: IntranetAgricultor, canActivate: [agricultorGuard] },
+  { path: 'intranet/comprador',  component: IntranetComprador,  canActivate: [compradorGuard] },
   { path: 'intranet/admin',      component: IntranetAdmin,      canActivate: [adminGuard] },
 ];

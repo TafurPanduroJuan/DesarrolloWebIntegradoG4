@@ -146,6 +146,14 @@ public class PedidoService {
             BigDecimal subtotal = precioUnitario.multiply(BigDecimal.valueOf(cantidad));
             totalEstimado = totalEstimado.add(subtotal);
 
+            // Se RESERVA (descuenta) el stock al crear el pedido, no recién al
+            // confirmarlo. loteService.confirmarPedido() toma un bloqueo
+            // pesimista sobre el lote y falla si, por una compra concurrente,
+            // el stock ya no alcanza — evitando así la sobreventa. Como todo
+            // este método es @Transactional, si una reserva falla se
+            // revierten también las reservas anteriores de este mismo pedido.
+            loteService.confirmarPedido(lote.getId(), cantidad);
+
             DetallePedido detalle = new DetallePedido();
             detalle.setPedidoId(pedidoGuardado.getId());
             detalle.setLoteId(lote.getId());
@@ -210,7 +218,8 @@ public class PedidoService {
         }
 
         for (DetallePedido d : misDetalles) {
-            loteService.confirmarPedido(d.getLoteId(), d.getCantidadSolicitada());
+            // El stock ya se reservó (descontó) al crear el pedido; confirmar
+            // solo cambia el estado del detalle, no vuelve a tocar el stock.
             d.setEstadoDetalle(EstadoDetalleEnum.CONFIRMADO);
             detalleRepository.save(d);
         }
@@ -278,6 +287,10 @@ public class PedidoService {
         }
 
         for (DetallePedido d : misDetalles) {
+            // El stock se reservó al crear el pedido; al rechazar hay que
+            // devolverlo al lote (antes esto no hacía falta porque el stock
+            // recién se descontaba al confirmar).
+            loteService.cancelarPedido(d.getLoteId(), d.getCantidadSolicitada());
             d.setEstadoDetalle(EstadoDetalleEnum.CANCELADO);
             detalleRepository.save(d);
         }
@@ -363,11 +376,12 @@ public class PedidoService {
         if (nuevoEstado == EstadoPedidoEnum.CANCELADO) {
             List<DetallePedido> detalles = detalleRepository.findByPedidoId(pedidoId);
             for (DetallePedido d : detalles) {
-                if (d.getEstadoDetalle() == EstadoDetalleEnum.CONFIRMADO) {
+                // Tanto los detalles ya CONFIRMADOS como los que seguían
+                // PENDIENTES tienen stock reservado (se descuenta al crear el
+                // pedido, ver crearPedido()), así que ambos deben devolverlo.
+                if (d.getEstadoDetalle() == EstadoDetalleEnum.CONFIRMADO
+                        || d.getEstadoDetalle() == EstadoDetalleEnum.PENDIENTE) {
                     loteService.cancelarPedido(d.getLoteId(), d.getCantidadSolicitada());
-                    d.setEstadoDetalle(EstadoDetalleEnum.CANCELADO);
-                    detalleRepository.save(d);
-                } else if (d.getEstadoDetalle() == EstadoDetalleEnum.PENDIENTE) {
                     d.setEstadoDetalle(EstadoDetalleEnum.CANCELADO);
                     detalleRepository.save(d);
                 }
