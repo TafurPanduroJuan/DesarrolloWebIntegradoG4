@@ -120,15 +120,19 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT,    "/api/lotes/**").hasRole("AGRICULTOR")
                 .requestMatchers(HttpMethod.DELETE, "/api/lotes/**").hasRole("AGRICULTOR")
                 .requestMatchers(HttpMethod.PATCH,  "/api/lotes/*/stock").hasRole("AGRICULTOR")
-                .requestMatchers(HttpMethod.PATCH,  "/api/lotes/*/confirmar").authenticated()
-                .requestMatchers(HttpMethod.PATCH,  "/api/lotes/*/cancelar").authenticated()
+                // Los endpoints /confirmar y /cancelar de lotes se eliminaron: el stock
+                // solo se mueve internamente desde PedidoService (ver LoteController).
                 .requestMatchers(HttpMethod.GET,  "/api/movimientos-stock/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/movimientos-stock").hasRole("AGRICULTOR")
 
                 // -- RF07/RF08/RF12/RF18 - Pedidos ----------------------------
-                .requestMatchers(HttpMethod.POST,  "/api/pedidos").authenticated()
+                // El compradorId/agricultorId ya NO se toma del cliente (ver PedidoController):
+                // siempre se resuelve desde el usuario autenticado, y las consultas por
+                // comprador/agricultor validan que el {id} de la URL sea el propio usuario
+                // (o un ADMINISTRADOR). El control de rol aquí es una primera barrera.
+                .requestMatchers(HttpMethod.POST,  "/api/pedidos").hasRole("COMPRADOR")
                 .requestMatchers(HttpMethod.GET,   "/api/pedidos/comprador/**").authenticated()
-                .requestMatchers(HttpMethod.GET,   "/api/pedidos/agricultor/**").hasRole("AGRICULTOR")
+                .requestMatchers(HttpMethod.GET,   "/api/pedidos/agricultor/**").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/api/pedidos/*/confirmar").hasRole("AGRICULTOR")
                 .requestMatchers(HttpMethod.PATCH, "/api/pedidos/*/rechazar").hasRole("AGRICULTOR")
                 .requestMatchers(HttpMethod.PATCH, "/api/pedidos/*/estado").authenticated()
@@ -138,6 +142,17 @@ public class SecurityConfig {
                 .requestMatchers("/api/notificaciones/**").authenticated()
                 .requestMatchers("/api/reportes/**").authenticated()
                 .requestMatchers("/api/backups/**").hasRole("ADMINISTRADOR")
+
+                // ── Datos de contacto: las rutas específicas van ANTES del comodín
+                // /** (igual que con /api/lotes más arriba), porque gana la primera
+                // regla que matchea. El listado completo (direcciones, teléfonos,
+                // emails de TODOS los usuarios) es solo para ADMINISTRADOR. El detalle
+                // de contacto ligado a un pedido (RF11) valida propiedad en el controller.
+                .requestMatchers(HttpMethod.GET, "/api/datos-contacto/pedido/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/datos-contacto/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.GET, "/api/datos-contacto/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.POST, "/api/datos-contacto").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/datos-contacto/**").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/api/lotes/*/precio").hasAnyRole("AGRICULTOR", "ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET,   "/api/lotes/*/precio-historial").authenticated()
                 .anyRequest().authenticated()
