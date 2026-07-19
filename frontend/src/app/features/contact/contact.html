@@ -44,17 +44,21 @@
 
             <textarea class="form-control mb-3"
               placeholder="Cuéntanos sobre ti"
-              name="mensaje" [(ngModel)]="form.mensaje"></textarea>
+              name="mensaje" [(ngModel)]="form.mensaje" required></textarea>
 
             <button class="btn btn-success w-100 rounded-pill"
-              [disabled]="!formRef.valid">
-              Enviar solicitud
+              [disabled]="!formRef.valid || enviando">
+              {{ enviando ? 'Enviando...' : 'Enviar solicitud' }}
             </button>
 
           </form>
 
           <div *ngIf="enviado" class="alert alert-success mt-3 text-center rounded-3 shadow-sm">
             Solicitud enviada correctamente
+          </div>
+
+          <div *ngIf="error" class="alert alert-danger mt-3 text-center rounded-3 shadow-sm">
+            {{ error }}
           </div>
 
         </div>

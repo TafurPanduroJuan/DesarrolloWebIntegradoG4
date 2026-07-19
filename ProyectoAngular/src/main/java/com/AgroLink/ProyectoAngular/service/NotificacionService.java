@@ -33,6 +33,10 @@ public class NotificacionService {
         return notificacionRepository.findByUsuarioIdOrderByFechaDesc(usuarioId);
     }
 
+    public Notificacion buscarPorId(Long id) {
+        return notificacionRepository.findById(id).orElse(null);
+    }
+
     @Transactional
     public void marcarComoLeida(Long notificacionId) {
         notificacionRepository.findById(notificacionId).ifPresent(n -> {

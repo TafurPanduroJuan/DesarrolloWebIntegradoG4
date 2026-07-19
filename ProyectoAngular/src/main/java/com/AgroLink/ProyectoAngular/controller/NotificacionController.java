@@ -44,7 +44,16 @@ public class NotificacionController {
     }
 
     @PatchMapping("/{id}/leer")
-    public ResponseEntity<Void> marcarLeida(@PathVariable Long id) {
+    public ResponseEntity<?> marcarLeida(@PathVariable Long id) {
+        Usuario u = getUsuarioLogueado();
+        if (u == null) return ResponseEntity.status(401).build();
+
+        Notificacion n = notificacionService.buscarPorId(id);
+        if (n == null) return ResponseEntity.notFound().build();
+        if (!u.getId().equals(n.getUsuarioId())) {
+            return ResponseEntity.status(403).body(Map.of("error", "Esta notificación no te pertenece"));
+        }
+
         notificacionService.marcarComoLeida(id);
         return ResponseEntity.ok().build();
     }

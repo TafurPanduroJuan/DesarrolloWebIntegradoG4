@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { ContactService } from './contact.service';
 
 @Component({
   selector: 'app-contact',
@@ -11,6 +12,8 @@ import { CommonModule } from '@angular/common';
 })
 export class Contact {
 
+  constructor(private contactService: ContactService) {}
+
   form = {
     nombre: '',
     correo: '',
@@ -20,19 +23,25 @@ export class Contact {
   };
 
   enviado = false;
+  enviando = false;
+  error = '';
 
   enviar() {
-    // TODO: conectar al backend cuando esté disponible el endpoint de solicitudes
-    this.enviado = true;
+    if (this.enviando) return;
+    this.error = '';
+    this.enviando = true;
 
-    this.form = {
-      nombre: '',
-      correo: '',
-      telefono: '',
-      tipo: '',
-      mensaje: ''
-    };
-
-    setTimeout(() => this.enviado = false, 5000);
+    this.contactService.enviar(this.form).subscribe({
+      next: () => {
+        this.enviando = false;
+        this.enviado = true;
+        this.form = { nombre: '', correo: '', telefono: '', tipo: '', mensaje: '' };
+        setTimeout(() => this.enviado = false, 5000);
+      },
+      error: (err) => {
+        this.enviando = false;
+        this.error = err.error?.error || 'No se pudo enviar tu mensaje. Intenta nuevamente en unos minutos.';
+      }
+    });
   }
 }

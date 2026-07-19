@@ -212,7 +212,7 @@ public class LoteService {
      */
     @Transactional
     public Lote confirmarPedido(Long loteId, Double cantidad) {
-        Lote lote = obtenerLoteOFallar(loteId);
+        Lote lote = obtenerLoteParaActualizarOFallar(loteId);
         double nuevoStock = lote.getStockDisponible() - cantidad;
         if (nuevoStock < 0) {
             throw new IllegalStateException(
@@ -239,7 +239,7 @@ public class LoteService {
      */
     @Transactional
     public Lote cancelarPedido(Long loteId, Double cantidad) {
-        Lote lote = obtenerLoteOFallar(loteId);
+        Lote lote = obtenerLoteParaActualizarOFallar(loteId);
         lote.setStockDisponible(lote.getStockDisponible() + cantidad);
         // Si estaba AGOTADO y se devuelve stock, volver a ACTIVO
         if (lote.getEstado() == EstadoLoteEnum.AGOTADO && lote.getStockDisponible() > 0) {
@@ -262,7 +262,7 @@ public class LoteService {
      */
     @Transactional
     public Lote ajustarStock(Long loteId, AjusteStockRequest req) {
-        Lote lote = obtenerLoteOFallar(loteId);
+        Lote lote = obtenerLoteParaActualizarOFallar(loteId);
 
         double nuevoStock;
         switch (req.getTipo()) {
@@ -320,6 +320,15 @@ public class LoteService {
 
     private Lote obtenerLoteOFallar(Long loteId) {
         Lote lote = loteRepository.findById(loteId).orElse(null);
+        if (lote == null) {
+            throw new IllegalArgumentException("Lote no encontrado: " + loteId);
+        }
+        return lote;
+    }
+
+    /** Como obtenerLoteOFallar, pero con SELECT ... FOR UPDATE (ver LoteRepository). */
+    private Lote obtenerLoteParaActualizarOFallar(Long loteId) {
+        Lote lote = loteRepository.findByIdForUpdate(loteId).orElse(null);
         if (lote == null) {
             throw new IllegalArgumentException("Lote no encontrado: " + loteId);
         }
