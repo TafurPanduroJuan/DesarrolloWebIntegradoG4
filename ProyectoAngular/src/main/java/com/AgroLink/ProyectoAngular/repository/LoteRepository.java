@@ -2,8 +2,11 @@ package com.AgroLink.ProyectoAngular.repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -16,6 +19,17 @@ public interface LoteRepository extends JpaRepository<Lote, Long> {
     List<Lote> findByCultivoIdIn(List<Long> cultivoIds);
 
     List<Lote> findByPublicadoTrue();
+
+    /**
+     * Igual que findById, pero toma un bloqueo pesimista de escritura
+     * (SELECT ... FOR UPDATE) sobre la fila del lote. Se usa siempre que se
+     * va a leer y modificar stockDisponible en la misma transacción
+     * (reservar/confirmar/cancelar/ajustar), para que dos transacciones
+     * concurrentes sobre el mismo lote no puedan generar sobreventa.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT l FROM Lote l WHERE l.id = :id")
+    Optional<Lote> findByIdForUpdate(@Param("id") Long id);
 
     /**
      * RF05 / RF25 — Búsqueda con filtros opcionales.

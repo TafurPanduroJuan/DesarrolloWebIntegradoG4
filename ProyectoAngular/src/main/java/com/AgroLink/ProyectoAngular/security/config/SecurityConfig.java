@@ -83,6 +83,11 @@ public class SecurityConfig {
                 // ── Rutas públicas ──────────────────────────────────────────
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                // Formulario público de contacto (landing page): cualquiera puede
+                // enviar una solicitud, incluso sin cuenta. Listar/atender es solo ADMIN.
+                .requestMatchers(HttpMethod.POST, "/api/solicitudes-contacto").permitAll()
+                .requestMatchers(HttpMethod.GET,   "/api/solicitudes-contacto/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.PATCH, "/api/solicitudes-contacto/**").hasRole("ADMINISTRADOR")
 
                 // ── Swagger UI y OpenAPI docs (sin autenticación) ───────────
                 .requestMatchers(
