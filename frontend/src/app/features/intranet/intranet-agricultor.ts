@@ -612,7 +612,7 @@ export class IntranetAgricultor implements OnInit {
 
   confirmarPedido(pedidoId: number): void {
     if (!this.usuario) return;
-    this.pedidoService.confirmarPedido(pedidoId, this.usuario.id).subscribe({
+    this.pedidoService.confirmarPedido(pedidoId).subscribe({
       next: () => {
         this.cargarPedidosRecibidos();
         if (this.pedidoDetalle?.id === pedidoId) {
@@ -630,7 +630,7 @@ export class IntranetAgricultor implements OnInit {
       alert('Por favor ingrese un motivo de rechazo.');
       return;
     }
-    this.pedidoService.rechazarPedido(pedidoId, this.usuario.id, this.motivoRechazo).subscribe({
+    this.pedidoService.rechazarPedido(pedidoId, this.motivoRechazo).subscribe({
       next: () => {
         this.motivoRechazo = '';
         this.cargarPedidosRecibidos();
@@ -677,7 +677,7 @@ export class IntranetAgricultor implements OnInit {
     }
 
     this.cargandoContacto = true;
-    this.datosContactoService.obtenerContactoPorPedido(pedido.id, this.usuario.id).subscribe({
+    this.datosContactoService.obtenerContactoPorPedido(pedido.id).subscribe({
       next: (data) => {
         this.contactoComprador = data;
         this.cargandoContacto = false;

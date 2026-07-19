@@ -15,21 +15,49 @@ import org.springframework.web.bind.annotation.*;
 import com.AgroLink.ProyectoAngular.dto.AjusteStockRequest;
 import com.AgroLink.ProyectoAngular.dto.LoteCatalogoResponse;
 import com.AgroLink.ProyectoAngular.dto.LotePublicacionRequest;
+import com.AgroLink.ProyectoAngular.model.Cultivo;
 import com.AgroLink.ProyectoAngular.model.Lote;
+import com.AgroLink.ProyectoAngular.model.Usuario;
+import com.AgroLink.ProyectoAngular.service.CultivoService;
 import com.AgroLink.ProyectoAngular.service.LoteService;
+import com.AgroLink.ProyectoAngular.service.UsuarioService;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * RF04 – Publicación y gestión de lotes comerciales.
- * RF09 – Control de stock (confirmar / cancelar / ajustar).
+ * RF09 – Control de stock (ajustar).
+ *
+ * Todas las operaciones de escritura validan que el lote (a través de su
+ * cultivo) pertenezca al agricultor autenticado.
  */
 @RestController
 @RequestMapping("/api/lotes")
 public class LoteController {
 
     private final LoteService loteService;
+    private final CultivoService cultivoService;
+    private final UsuarioService usuarioService;
 
-    public LoteController(LoteService loteService) {
+    public LoteController(LoteService loteService, CultivoService cultivoService, UsuarioService usuarioService) {
         this.loteService = loteService;
+        this.cultivoService = cultivoService;
+        this.usuarioService = usuarioService;
+    }
+
+    private Usuario usuarioAutenticado() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usuarioService.buscarPorEmail(email);
+    }
+
+    /** Un lote pertenece al agricultor dueño del cultivo asociado. */
+    private boolean esPropietarioDelCultivo(Long cultivoId, Usuario yo) {
+        if (yo == null) return false;
+        Cultivo cultivo = cultivoService.buscarPorId(cultivoId);
+        return cultivo != null && cultivo.getAgricultorId().equals(yo.getId());
+    }
+
+    private boolean esPropietarioDelLote(Lote lote, Usuario yo) {
+        return lote != null && esPropietarioDelCultivo(lote.getCultivoId(), yo);
     }
 
     // ── Consultas ────────────────────────────────────────────────
@@ -91,6 +119,11 @@ public class LoteController {
      */
     @PostMapping("/publicar")
     public ResponseEntity<?> publicarLote(@Valid @RequestBody LotePublicacionRequest req) {
+        Usuario yo = usuarioAutenticado();
+        if (!esPropietarioDelCultivo(req.getCultivoId(), yo)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Solo puedes publicar lotes de tus propios cultivos"));
+        }
         try {
             Lote lote = loteService.publicarLote(req);
             return ResponseEntity.status(HttpStatus.CREATED).body(lote);
@@ -100,34 +133,13 @@ public class LoteController {
     }
 
     // ── RF09: Control de stock ────────────────────────────────────
-
-    /**
-     * PATCH /api/lotes/{id}/confirmar?cantidad=X
-     * Descuenta stock al confirmar un pedido.
-     */
-    @PatchMapping("/{id}/confirmar")
-    public ResponseEntity<?> confirmarPedido(@PathVariable Long id,
-                                              @RequestParam Double cantidad) {
-        try {
-            return ResponseEntity.ok(loteService.confirmarPedido(id, cantidad));
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    /**
-     * PATCH /api/lotes/{id}/cancelar?cantidad=X
-     * Devuelve stock al cancelar un pedido.
-     */
-    @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<?> cancelarPedido(@PathVariable Long id,
-                                             @RequestParam Double cantidad) {
-        try {
-            return ResponseEntity.ok(loteService.cancelarPedido(id, cantidad));
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
+    //
+    // NOTA DE SEGURIDAD: confirmarPedido()/cancelarPedido() de LoteService ya
+    // NO se exponen como endpoints HTTP públicos. El único flujo legítimo para
+    // descontar/devolver stock es a través de PedidoService (confirmar/rechazar/
+    // cancelar un pedido), que invoca esos métodos internamente en Java. Un
+    // endpoint público aquí permitía a cualquier usuario autenticado alterar el
+    // stock de cualquier lote sin que existiera un pedido real detrás.
 
     /**
      * PATCH /api/lotes/{id}/stock
@@ -136,6 +148,12 @@ public class LoteController {
     @PatchMapping("/{id}/stock")
     public ResponseEntity<?> ajustarStock(@PathVariable Long id,
                                            @Valid @RequestBody AjusteStockRequest req) {
+        Lote lote = loteService.buscarPorId(id);
+        if (lote == null) return ResponseEntity.notFound().build();
+        if (!esPropietarioDelLote(lote, usuarioAutenticado())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Este lote no te pertenece"));
+        }
         try {
             return ResponseEntity.ok(loteService.ajustarStock(id, req));
         } catch (IllegalStateException | IllegalArgumentException e) {
@@ -146,26 +164,54 @@ public class LoteController {
     // ── CRUD básico ──────────────────────────────────────────────
 
     @PostMapping
-    public ResponseEntity<Lote> crear(@RequestBody Lote lote) {
+    public ResponseEntity<?> crear(@RequestBody Lote lote) {
+        Usuario yo = usuarioAutenticado();
+        if (lote.getCultivoId() == null || !esPropietarioDelCultivo(lote.getCultivoId(), yo)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Solo puedes crear lotes de tus propios cultivos"));
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(loteService.guardar(lote));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Lote> actualizar(@PathVariable Long id, @RequestBody Lote lote) {
-        if (loteService.buscarPorId(id) == null) return ResponseEntity.notFound().build();
+    public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Lote lote) {
+        Lote existente = loteService.buscarPorId(id);
+        if (existente == null) return ResponseEntity.notFound().build();
+        Usuario yo = usuarioAutenticado();
+        if (!esPropietarioDelLote(existente, yo)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Este lote no te pertenece"));
+        }
+        // El cultivoId de un lote no puede reasignarse a un cultivo ajeno por esta vía.
         lote.setId(id);
+        lote.setCultivoId(existente.getCultivoId());
         return ResponseEntity.ok(loteService.guardar(lote));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        if (loteService.buscarPorId(id) == null) return ResponseEntity.notFound().build();
+    public ResponseEntity<?> eliminar(@PathVariable Long id) {
+        Lote existente = loteService.buscarPorId(id);
+        if (existente == null) return ResponseEntity.notFound().build();
+        if (!esPropietarioDelLote(existente, usuarioAutenticado())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Este lote no te pertenece"));
+        }
         loteService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/precio")
     public ResponseEntity<?> actualizarPrecio(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Lote existente = loteService.buscarPorId(id);
+        if (existente == null) return ResponseEntity.notFound().build();
+        Usuario yo = usuarioAutenticado();
+        boolean autorizado = (yo != null && yo.getRol() != null && yo.getRol().name().equals("ADMINISTRADOR"))
+            || esPropietarioDelLote(existente, yo);
+        if (!autorizado) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Este lote no te pertenece"));
+        }
+
         Object precioObj = body.get("precio");
         String motivo = (String) body.get("motivo");
         

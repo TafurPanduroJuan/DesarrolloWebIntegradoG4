@@ -126,17 +126,9 @@ export class LoteService {
     return this.http.patch<LoteComercial>(`${this.API}/${loteId}/stock`, req);
   }
 
-  confirmarPedido(loteId: number, cantidad: number): Observable<LoteComercial> {
-    return this.http.patch<LoteComercial>(
-      `${this.API}/${loteId}/confirmar?cantidad=${cantidad}`, {}
-    );
-  }
-
-  cancelarPedido(loteId: number, cantidad: number): Observable<LoteComercial> {
-    return this.http.patch<LoteComercial>(
-      `${this.API}/${loteId}/cancelar?cantidad=${cantidad}`, {}
-    );
-  }
+  // confirmarPedido()/cancelarPedido() de lote se quitaron: el descuento y
+  // devolución de stock ahora se gestiona siempre desde PedidoService en el
+  // backend (ver PedidoService), nunca directamente contra el lote.
 
   getMovimientosPorLote(loteId: number): Observable<MovimientoStock[]> {
     return this.http.get<MovimientoStock[]>(`${this.STOCK_API}/lote/${loteId}`);

@@ -21,11 +21,10 @@ export class DatosContactoService {
 
   constructor(private http: HttpClient) {}
 
-  // RF11: el backend valida que el solicitante sea parte del pedido
-  // y que el pedido esté confirmado o en una etapa de coordinación autorizada.
-  obtenerContactoPorPedido(pedidoId: number, solicitanteId: number): Observable<ContactoPedido> {
-    return this.http.get<ContactoPedido>(
-      `${this.API}/pedido/${pedidoId}?solicitanteId=${solicitanteId}`
-    );
+  // RF11: el solicitante ya no se manda desde el cliente; el backend lo toma
+  // del JWT y valida que sea parte del pedido y que esté en una etapa de
+  // coordinación autorizada.
+  obtenerContactoPorPedido(pedidoId: number): Observable<ContactoPedido> {
+    return this.http.get<ContactoPedido>(`${this.API}/pedido/${pedidoId}`);
   }
 }

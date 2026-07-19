@@ -90,7 +90,7 @@ export class IntranetComprador implements OnInit {
     }
 
     this.cargandoContacto = true;
-    this.datosContactoService.obtenerContactoPorPedido(pedido.id, this.usuario.id).subscribe({
+    this.datosContactoService.obtenerContactoPorPedido(pedido.id).subscribe({
       next: (data) => {
         this.contactoAgricultor = data;
         this.cargandoContacto = false;
