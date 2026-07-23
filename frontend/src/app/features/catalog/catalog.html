@@ -310,12 +310,17 @@
               class="form-control"
               [(ngModel)]="pedidoCantidad"
               min="1"
-              [max]="loteSeleccionado.stockDisponible"
+              [max]="stockTotalProducto(loteSeleccionado)"
               required
             />
           </div>
           <div class="form-text text-muted">
-            Stock disponible: {{ loteSeleccionado.stockDisponible | number:'1.0-2' }} {{ loteSeleccionado.unidadMedida }}
+            Stock de este lote: {{ loteSeleccionado.stockDisponible | number:'1.0-2' }} {{ loteSeleccionado.unidadMedida }}
+          </div>
+          <!-- RF19: aviso de pedido parcial cuando la cantidad supera el stock del lote elegido -->
+          <div class="alert alert-warning py-2 px-3 mt-2 mb-0" style="font-size: 0.85rem;" *ngIf="pedidoCantidad > loteSeleccionado.stockDisponible && pedidoCantidad <= stockTotalProducto(loteSeleccionado)">
+            <i class="bi bi-diagram-3-fill me-1"></i>
+            Este lote no tiene stock suficiente. Tu pedido se completará con otros lotes/agricultores del mismo producto (pedido parcial).
           </div>
         </div>
 

@@ -154,6 +154,16 @@ export class Catalog implements OnInit {
     }
   }
 
+  // RF19: stock total disponible del mismo producto sumando todos los lotes
+  // ACTIVOS del catálogo (no solo el lote seleccionado). Permite que el
+  // comprador pida más de lo que tiene un solo lote y deje que el backend
+  // reparta el pedido entre varios agricultores.
+  stockTotalProducto(lote: LoteCatalogo): number {
+    return this.lotes
+      .filter(l => l.nombreProducto === lote.nombreProducto && this.estaDisponible(l))
+      .reduce((sum, l) => sum + l.stockDisponible, 0);
+  }
+
   enviarPedido(): void {
     if (!this.loteSeleccionado) return;
     this.pedidoError = '';
@@ -163,8 +173,9 @@ export class Catalog implements OnInit {
       return;
     }
 
-    if (this.pedidoCantidad > this.loteSeleccionado.stockDisponible) {
-      this.pedidoError = `La cantidad no puede superar el stock disponible (${this.loteSeleccionado.stockDisponible} ${this.loteSeleccionado.unidadMedida}).`;
+    const stockTotal = this.stockTotalProducto(this.loteSeleccionado);
+    if (this.pedidoCantidad > stockTotal) {
+      this.pedidoError = `La cantidad supera el stock disponible entre todos los productores (${stockTotal} ${this.loteSeleccionado.unidadMedida}).`;
       return;
     }
 
